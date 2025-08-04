@@ -36,6 +36,21 @@ Future<void> signInWithMagicLink(String email) async {
   }
 }
 
+Future<void> sendOtp(String email) async {
+  state = const AsyncValue.loading();
+  final authRepo = ref.read(authenticationRepositoryProvider);
+  final result = await AsyncValue.guard(() => authRepo.sendOtpEmail(email));
+
+  if (result is AsyncError) {
+    state = AsyncError(result.error, result.stackTrace); // ✅ 這樣才型別安全
+  } else {
+    state = const AsyncData(AuthenticationState());
+  }
+}
+
+
+
+
   Future<void> verifyOtp({
     required String email,
     required String token,

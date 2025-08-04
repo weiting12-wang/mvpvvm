@@ -27,12 +27,12 @@ class AuthenticationRepository {
 
   Future<void> signInWithMagicLink(String email) async {
     // TODO: fake data
-    return;
+    //return;
 
     try {
       await supabase.auth.signInWithOtp(
         email: email,
-        emailRedirectTo: Constants.supabaseLoginCallback,
+        //移除 emailRedirectTo，否則會觸發 magic link emailRedirectTo: Constants.supabaseLoginCallback,
       );
     } on AuthException catch (error) {
       throw Exception(error.message);
@@ -41,28 +41,30 @@ class AuthenticationRepository {
     }
   }
 
+  Future<void> sendOtpEmail(String email) async {
+    try {
+      await supabase.auth.signUp(
+        email: email,
+        password: '', //
+      );
+    } on AuthException catch (error) {
+      throw Exception(error.message);
+    } catch (error) {
+      throw Exception(Languages.unexpectedErrorOccurred);
+    }
+  }
+
+
   Future<AuthResponse> verifyOtp({
     required String email,
     required String token,
     required bool isRegister,
   }) async {
     try {
-      // TODO: fake data
-      return AuthResponse(
-        user: User(
-          id: '',
-          appMetadata: {},
-          userMetadata: {},
-          aud: '',
-          createdAt: '',
-          email: email,
-        ),
-      );
-
       final result = await supabase.auth.verifyOTP(
         email: email,
         token: token,
-        type: isRegister ? OtpType.signup : OtpType.magiclink,
+        type: OtpType.email, // ✅ 使用 6 碼 OTP 驗證
       );
       return result;
     } on AuthException catch (error) {
@@ -71,6 +73,7 @@ class AuthenticationRepository {
       throw Exception(Languages.unexpectedErrorOccurred);
     }
   }
+
 
   Future<AuthResponse> signInWithGoogle() async {
     // TODO: fake data
