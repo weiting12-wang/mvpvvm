@@ -24,6 +24,8 @@ class SignInScreen extends ConsumerStatefulWidget {
 
 class _SignInScreenState extends ConsumerState<SignInScreen> {
   late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
+  bool _isPasswordValid = false;
   bool _isEmailValid = false;
 
   @override
@@ -31,12 +33,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     super.initState();
     _emailController = TextEditingController();
     _emailController.addListener(_validateEmail);
+    _passwordController = TextEditingController();
+    _passwordController.addListener(_validateForm);
+
   }
 
   @override
   void dispose() {
     _emailController.removeListener(_validateEmail);
+    _passwordController.removeListener(_validateForm);
     _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -45,6 +52,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       _isEmailValid = isValidEmail(_emailController.text);
     });
   }
+  void _validateForm() {
+    setState(() {
+      _isEmailValid = isValidEmail(_emailController.text);
+      _isPasswordValid = _passwordController.text.length >= 6;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +90,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     validator: notEmptyEmailValidator,
                   ),
                   const SizedBox(height: 32),
+                  CommonTextFormField(
+                    label: 'Password',
+                    controller: _passwordController,
+                    isPassword: true, // ✅ 正確用法
+                    validator: (val) => val != null && val.length < 6
+                        ? 'Password too short'
+                        : null,
+                  ),
+                  const SizedBox(height: 32),
                   PrimaryButton(
-                    isEnable: _isEmailValid,
+                    isEnable: _isEmailValid && _isPasswordValid,
                     text: 'continue'.tr(),
                     onPressed: () {
                       ref
