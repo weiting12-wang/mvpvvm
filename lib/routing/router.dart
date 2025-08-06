@@ -95,6 +95,7 @@ final GoRouter router = GoRouter(
             OtpScreen(
               email: map?['email'],
               isRegister: map?['isRegister'],
+              password: map?['password'], // ✅ 把 password 一起傳進去
             ),
           );
         }),

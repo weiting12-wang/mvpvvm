@@ -55,6 +55,7 @@ Future<void> sendOtp(String email) async {
     required String email,
     required String token,
     required bool isRegister,
+    String? password, //
   }) async {
     state = const AsyncValue.loading();
     final authRepo = ref.read(authenticationRepositoryProvider);
@@ -63,6 +64,7 @@ Future<void> sendOtp(String email) async {
         email: email,
         token: token,
         isRegister: isRegister,
+        password: password, // ✅ 傳下去
       ),
     );
     handleResult(result);

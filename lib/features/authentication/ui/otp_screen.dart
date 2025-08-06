@@ -16,11 +16,13 @@ import '../../../theme/app_theme.dart';
 class OtpScreen extends ConsumerStatefulWidget {
   final String email;
   final bool isRegister;
+  final String? password; 
 
   const OtpScreen({
     super.key,
     required this.email,
     required this.isRegister,
+    this.password,
   });
 
   @override
@@ -153,6 +155,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                           email: widget.email,
                           token: otpController.text,
                           isRegister: widget.isRegister,
+                          password: widget.password, // ✅ 傳入密碼
                         ),
                   ),
                   const SizedBox(height: 32),

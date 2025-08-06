@@ -33,6 +33,8 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   late final TextEditingController _emailController;
   late final StreamSubscription<AuthState> _authSubscription;
+  late final TextEditingController _passwordController;
+  bool _isPasswordValid = false;
   bool _isEmailValid = false;
 
   @override
@@ -40,6 +42,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     super.initState();
     _emailController = TextEditingController();
     _emailController.addListener(_validateEmail);
+    _passwordController = TextEditingController();
+    _passwordController.addListener(_validatePassword);
+
 
     _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
@@ -60,6 +65,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   void dispose() {
     _emailController.removeListener(_validateEmail);
     _emailController.dispose();
+    _passwordController.removeListener(_validatePassword);
+    _passwordController.dispose();
     _authSubscription.cancel();
     super.dispose();
   }
@@ -69,6 +76,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       _isEmailValid = isValidEmail(_emailController.text);
     });
   }
+  void _validatePassword() {
+    setState(() {
+      _isPasswordValid = _passwordController.text.length >= 6;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -122,22 +135,35 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 validator: notEmptyEmailValidator,
               ),
               const SizedBox(height: 32),
+              CommonTextFormField(
+                label: 'Password',
+                controller: _passwordController,
+                isPassword: true,
+                validator: (val) => val != null && val.length < 6
+                    ? 'Password too short'
+                    : null,
+              ),
+              const SizedBox(height: 32),
+
               PrimaryButton(
-                isEnable: _isEmailValid,
+                isEnable: _isEmailValid && _isPasswordValid,
                 text: 'continue'.tr(),
                 onPressed: () {
                   ref
                       .read(authenticationViewModelProvider.notifier)
                       .signInWithMagicLink(_emailController.text);
+
                   context.push(
                     Routes.otp,
                     extra: {
                       'email': _emailController.text,
+                      'password': _passwordController.text,
                       'isRegister': true,
                     },
                   );
                 },
               ),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

@@ -9,6 +9,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
+
 
 import '/constants/constants.dart';
 import '/constants/languages.dart';
@@ -59,6 +61,7 @@ class AuthenticationRepository {
     required String email,
     required String token,
     required bool isRegister,
+    String? password, // 
   }) async {
     try {
       final result = await supabase.auth.verifyOTP(
@@ -66,6 +69,20 @@ class AuthenticationRepository {
         token: token,
         type: OtpType.email, // ✅ 使用 6 碼 OTP 驗證
       );
+
+      // ✅ 根據 isRegister 呼叫 EC2 註冊
+      if (isRegister) {
+        if (password == null) {
+          throw Exception('Password is required for registration');
+        }
+        print('[verifyOtp] Skipped EC2 register for now');
+        //await registerToEc2(
+        //  email: email,
+        //  password: password,
+        //  token: result.session?.accessToken ?? '',
+        //);
+      }
+
       return result;
     } on AuthException catch (error) {
       throw Exception(error.message);
@@ -73,6 +90,30 @@ class AuthenticationRepository {
       throw Exception(Languages.unexpectedErrorOccurred);
     }
   }
+
+  Future<void> registerToEc2({
+    required String email,
+    required String password,
+    required String token,
+  }) async {
+    final response = await http.post(
+      Uri.parse('http://your-ec2-api/register'), // 👈 請換成你自己的 API
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('EC2 註冊失敗：${response.body}');
+    }
+  }
+
+
 
 
   Future<AuthResponse> signInWithGoogle() async {
