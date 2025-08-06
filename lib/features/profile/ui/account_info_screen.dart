@@ -32,6 +32,8 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
   late final TextEditingController nameController;
   String? avatar;
   String? name;
+  // ✅ 新增性別欄位
+  String? gender;
 
   @override
   void initState() {
@@ -39,6 +41,7 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
     nameController = TextEditingController(text: widget.originalProfile.name);
     avatar = widget.originalProfile.avatar;
     name = widget.originalProfile.name;
+    gender = widget.originalProfile.gender; // 若已有資料則初始化
 
     nameController.addListener(_updateName);
   }
@@ -58,6 +61,29 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
     nameController.removeListener(_updateName);
     nameController.dispose();
     super.dispose();
+  }
+  // ✅ ⬇⬇⬇ 在這裡貼上 gender 按鈕元件方法
+  Widget _buildGenderButton(String value) {
+    final isSelected = gender == value;
+
+    return GestureDetector(
+      onTap: () => setState(() => gender = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.white,
+          border: Border.all(color: Colors.blue),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          value,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.blue,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -96,6 +122,18 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
                   label: Languages.name,
                   controller: nameController,
                 ),
+                const SizedBox(height: 32),
+                Text("Gender", style: AppTheme.body12),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildGenderButton("Boy"),
+                    const SizedBox(width: 16),
+                    _buildGenderButton("Girl"),
+                  ],
+                ),
+
               ],
             ),
           ),
@@ -108,7 +146,8 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
             child: PrimaryButton(
               text: Languages.confirm,
               isEnable: avatar != widget.originalProfile.avatar ||
-                  name != widget.originalProfile.name,
+                  name != widget.originalProfile.name ||
+                  gender != widget.originalProfile.gender, //
               onPressed: () async {
                 try {
                   Global.showLoading(context);
@@ -117,6 +156,7 @@ class _AccountInfoScreenState extends ConsumerState<AccountInfoScreen> {
                       .updateProfile(
                         avatar: avatar,
                         name: name,
+                        gender: gender, 
                       );
                   if (context.mounted) {
                     context.pop();

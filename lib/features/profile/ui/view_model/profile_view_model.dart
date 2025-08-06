@@ -31,6 +31,7 @@ class ProfileViewModel extends _$ProfileViewModel {
     String? email,
     String? name,
     String? avatar,
+    String? gender, // ✅ 新增
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -41,11 +42,13 @@ class ProfileViewModel extends _$ProfileViewModel {
         email: email ?? currentProfile.email,
         name: name ?? currentProfile.name,
         avatar: newAvatarPath ?? currentProfile.avatar,
+        gender: gender ?? currentProfile.gender, // ✅ 這一行就是你要加的
       ) ??
           Profile(
             email: email,
             name: name,
             avatar: newAvatarPath,
+            gender: gender, // ✅ fallback 建構時也要加
           );
       debugPrint(
           '${Constants.tag} [ProfileViewModel.updateProfile] $updatedProfile');

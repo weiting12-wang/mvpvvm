@@ -29,7 +29,9 @@ mixin _$Profile {
   @JsonKey(name: 'expiry_date_premium')
   DateTime? get expiryDatePremium => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_lifetime_premium')
-  bool? get isLifetimePremium => throw _privateConstructorUsedError;
+  bool? get isLifetimePremium =>
+      throw _privateConstructorUsedError; // ✅ 新增 gender 欄位
+  String? get gender => throw _privateConstructorUsedError;
 
   /// Serializes this Profile to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,7 +55,8 @@ abstract class $ProfileCopyWith<$Res> {
       String? avatar,
       int? diamond,
       @JsonKey(name: 'expiry_date_premium') DateTime? expiryDatePremium,
-      @JsonKey(name: 'is_lifetime_premium') bool? isLifetimePremium});
+      @JsonKey(name: 'is_lifetime_premium') bool? isLifetimePremium,
+      String? gender});
 }
 
 /// @nodoc
@@ -79,6 +82,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? diamond = freezed,
     Object? expiryDatePremium = freezed,
     Object? isLifetimePremium = freezed,
+    Object? gender = freezed,
   }) {
     return _then(_value.copyWith(
       id: freezed == id
@@ -113,6 +117,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
           ? _value.isLifetimePremium
           : isLifetimePremium // ignore: cast_nullable_to_non_nullable
               as bool?,
+      gender: freezed == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -132,7 +140,8 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
       String? avatar,
       int? diamond,
       @JsonKey(name: 'expiry_date_premium') DateTime? expiryDatePremium,
-      @JsonKey(name: 'is_lifetime_premium') bool? isLifetimePremium});
+      @JsonKey(name: 'is_lifetime_premium') bool? isLifetimePremium,
+      String? gender});
 }
 
 /// @nodoc
@@ -156,6 +165,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? diamond = freezed,
     Object? expiryDatePremium = freezed,
     Object? isLifetimePremium = freezed,
+    Object? gender = freezed,
   }) {
     return _then(_$ProfileImpl(
       id: freezed == id
@@ -190,6 +200,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
           ? _value.isLifetimePremium
           : isLifetimePremium // ignore: cast_nullable_to_non_nullable
               as bool?,
+      gender: freezed == gender
+          ? _value.gender
+          : gender // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -205,7 +219,8 @@ class _$ProfileImpl implements _Profile {
       this.avatar = null,
       this.diamond = null,
       @JsonKey(name: 'expiry_date_premium') this.expiryDatePremium = null,
-      @JsonKey(name: 'is_lifetime_premium') this.isLifetimePremium = null});
+      @JsonKey(name: 'is_lifetime_premium') this.isLifetimePremium = null,
+      this.gender = null});
 
   factory _$ProfileImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProfileImplFromJson(json);
@@ -234,10 +249,14 @@ class _$ProfileImpl implements _Profile {
   @override
   @JsonKey(name: 'is_lifetime_premium')
   final bool? isLifetimePremium;
+// ✅ 新增 gender 欄位
+  @override
+  @JsonKey()
+  final String? gender;
 
   @override
   String toString() {
-    return 'Profile(id: $id, email: $email, name: $name, job: $job, avatar: $avatar, diamond: $diamond, expiryDatePremium: $expiryDatePremium, isLifetimePremium: $isLifetimePremium)';
+    return 'Profile(id: $id, email: $email, name: $name, job: $job, avatar: $avatar, diamond: $diamond, expiryDatePremium: $expiryDatePremium, isLifetimePremium: $isLifetimePremium, gender: $gender)';
   }
 
   @override
@@ -254,13 +273,14 @@ class _$ProfileImpl implements _Profile {
             (identical(other.expiryDatePremium, expiryDatePremium) ||
                 other.expiryDatePremium == expiryDatePremium) &&
             (identical(other.isLifetimePremium, isLifetimePremium) ||
-                other.isLifetimePremium == isLifetimePremium));
+                other.isLifetimePremium == isLifetimePremium) &&
+            (identical(other.gender, gender) || other.gender == gender));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, email, name, job, avatar,
-      diamond, expiryDatePremium, isLifetimePremium);
+      diamond, expiryDatePremium, isLifetimePremium, gender);
 
   /// Create a copy of Profile
   /// with the given fields replaced by the non-null parameter values.
@@ -287,8 +307,8 @@ abstract class _Profile implements Profile {
       final String? avatar,
       final int? diamond,
       @JsonKey(name: 'expiry_date_premium') final DateTime? expiryDatePremium,
-      @JsonKey(name: 'is_lifetime_premium')
-      final bool? isLifetimePremium}) = _$ProfileImpl;
+      @JsonKey(name: 'is_lifetime_premium') final bool? isLifetimePremium,
+      final String? gender}) = _$ProfileImpl;
 
   factory _Profile.fromJson(Map<String, dynamic> json) = _$ProfileImpl.fromJson;
 
@@ -309,7 +329,9 @@ abstract class _Profile implements Profile {
   DateTime? get expiryDatePremium;
   @override
   @JsonKey(name: 'is_lifetime_premium')
-  bool? get isLifetimePremium;
+  bool? get isLifetimePremium; // ✅ 新增 gender 欄位
+  @override
+  String? get gender;
 
   /// Create a copy of Profile
   /// with the given fields replaced by the non-null parameter values.

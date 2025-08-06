@@ -19,6 +19,9 @@ class Profile with _$Profile {
     @JsonKey(name: 'is_lifetime_premium')
     @Default(null)
     bool? isLifetimePremium,
+
+    // ✅ 新增 gender 欄位
+    @Default(null) String? gender,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);
