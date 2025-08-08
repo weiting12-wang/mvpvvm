@@ -94,5 +94,11 @@
   "purchase_error": "Purchase failed",
   "restore_purchases_success": "Your purchases have been restored successfully",
   "no_active_purchases": "No active purchases found",
-  "restore_purchases_error": "Failed to restore purchases"
+  "restore_purchases_error": "Failed to restore purchases",
+
+  "enligthenary_game":"Enlightenary Game",
+  "game1_StateMachine": "Game1 StateMachine",
+  "game2_SimpleAnimation": "Game2 SimpleAnimation",
+  "game3_Artboard_SM": "Game3 Artboard+SM"
+
 }

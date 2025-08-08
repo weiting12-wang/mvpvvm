@@ -97,4 +97,11 @@ class Languages {
   static String restorePurchasesSuccess = 'restore_purchases_success'.tr();
   static String noActivePurchases = 'no_active_purchases'.tr();
   static String restorePurchasesError = 'restore_purchases_error'.tr();
+
+  // Rive Game
+  static String riveGameTitle = 'enlightenary_game'.tr();
+  static String riveGame1 = 'game1_StateMachine'.tr();
+  static String riveGame2 = 'game2_SimpleAnimation'.tr();
+  static String riveGame3 = 'game3_Artboard_SM'.tr();
+
 }

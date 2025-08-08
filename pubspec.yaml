@@ -72,6 +72,7 @@ dependencies:
   url_launcher: ^6.3.0
   uuid: ^4.4.0
   http: ^1.2.2
+  rive: ^0.12.4
 
 dev_dependencies:
   build_runner: ^2.4.13
@@ -103,6 +104,7 @@ flutter:
     - assets/google_fonts/
     - assets/images/
     - assets/translations/
+    - assets/rive/vehicles.riv
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -10,11 +10,14 @@ import '../../../features/profile/ui/profile_screen.dart';
 import '../../../theme/app_colors.dart';
 import '../../hero_list/ui/view_model/hero_count_provider.dart';
 import '../../hero_list/ui/view_model/hero_list_view_model.dart';
+import '../../../features/game/ui/game_screen.dart';
 
 const List<Widget> _screens = [
   HeroListScreen(),
   HeroListScreen(),
   ProfileScreen(),
+  //AnimationScreen(),
+  RiveMenuScreen(),
 ];
 
 class MainScreen extends ConsumerStatefulWidget {
@@ -54,12 +57,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       PersistentBottomNavBarItem(
         icon: HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
-          color: AppColors.mono0,
+          color: AppColors.blueberry90,
           size: 20,
         ),
         inactiveIcon: HugeIcon(
           icon: HugeIcons.strokeRoundedAdd01,
-          color: AppColors.mono0,
+          color: AppColors.blueberry90,
           size: 20,
         ),
         activeColorPrimary: selectedColor,
@@ -79,6 +82,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         icon: Icon(MingCuteIcons.mgc_user_3_fill, color: selectedColor),
         inactiveIcon:
             Icon(MingCuteIcons.mgc_user_3_line, color: unselectedColor),
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.sports_baseball, color: selectedColor),
+        inactiveIcon: Icon(Icons.sports_baseball_outlined, color: unselectedColor),
+        //title: 'Games',
       ),
     ];
   }
@@ -129,7 +137,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             curve: Curves.bounceInOut,
           ),
         ),
-        navBarStyle: NavBarStyle.style17,
+        navBarStyle: NavBarStyle.style6,
       ),
     );
   }
