@@ -12,13 +12,15 @@ import '../../hero_list/ui/view_model/hero_count_provider.dart';
 import '../../hero_list/ui/view_model/hero_list_view_model.dart';
 import '../../../features/game/ui/game_screen.dart';
 
-const List<Widget> _screens = [
-  HeroListScreen(),
-  HeroListScreen(),
-  ProfileScreen(),
-  //AnimationScreen(),
-  RiveMenuScreen(),
-];
+
+// const List<Widget> _screens = [
+//   HeroListScreen(),
+//   HeroListScreen(),
+//   ProfileScreen(),
+//   //RiveMenuScreen(),
+//   // 用 ValueKey 強制在被選到時重建，讓進場動畫每次都跑
+//   RiveMenuScreen(key: ValueKey('rive-$_riveRebuildTick')),
+// ];
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -28,7 +30,20 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  late PersistentTabController _controller;
+  //late PersistentTabController _controller;
+  var _controller = PersistentTabController(initialIndex: 0);
+  static const int _riveTabIndex = 3; // Rive tab 的位置 (依你的 items 調整)
+  int _riveRebuildTick = 0;           // 每次選到 Rive tab 就遞增，用於強制重建
+ 
+   List<Widget> _buildScreens() {
+    return [
+      const HeroListScreen(),
+      const HeroListScreen(),
+      const ProfileScreen(),
+      // 注意：不要加 const，並用 ValueKey 綁定 tick
+      RiveMenuScreen(key: ValueKey<int>(_riveRebuildTick)),
+    ];
+  }
 
   @override
   void initState() {
@@ -102,13 +117,19 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       body: PersistentTabView(
         context,
         controller: _controller,
-        screens: _screens,
+        screens: _buildScreens(),
         items: _navBarsItems(
           context,
           selectedColor,
           unselectedColor,
           count,
         ),
+        onItemSelected: (index) {
+          if (index == _riveTabIndex) {
+          setState(() => _riveRebuildTick++); // 選到 Rive → 重新 mount RiveMenuScreen
+          }
+        },
+        //popAllScreensOnTapOfSelectedTab: true, // 同 tab 再點可把 push 的頁面全部 pop 回根頁
         confineToSafeArea: true,
         backgroundColor: context.secondaryWidgetColor,
         handleAndroidBackButtonPress: true,

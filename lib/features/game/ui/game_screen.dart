@@ -12,24 +12,15 @@ class RiveMenuScreen extends StatefulWidget {
 }
 
 class _RiveMenuScreenState extends State<RiveMenuScreen> {
-  // === 這裡設定「進場動畫」 ===
-  static const _introDuration = Duration(seconds: 3); // 播放幾秒後顯示按鈕
+  // 進場動畫設定（依你的素材名稱調整）
   static const _introAsset = RiveAssets.rive_game_into;
-  static const String? _introArtboard = null;          // 例: 'Intro'
-  static const String? _introStateMachine = null;      // 例: 'IntroSM'（若用 SM）
-  static const String? _introAnimation = 'intro';      // 例: 'intro'（若用 SimpleAnimation）
+  static const String? _introArtboard = null;       // 例: 'Intro'
+  static const String? _introStateMachine = null;   // 例: 'IntroSM'
+  static const String? _introAnimation = 'intro';   // 例: 'intro'
 
   bool _showMenu = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _playIntroThenShowMenu();
-  }
-
-  Future<void> _playIntroThenShowMenu() async {
-    setState(() => _showMenu = false);
-    await Future<void>.delayed(_introDuration);
+  void _onStartPressed() {
     if (!mounted) return;
     setState(() => _showMenu = true);
   }
@@ -39,29 +30,66 @@ class _RiveMenuScreenState extends State<RiveMenuScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(Languages.riveGameTitle)),
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 350),
-        child: _showMenu ? _buildMenu(context) : _buildIntro(),
+        duration: const Duration(milliseconds: 300),
+        child: _showMenu ? _buildMenu(context) : _buildIntroWithStart(),
       ),
     );
   }
 
-  // 進場 Rive 畫面（先顯示這個）
-  Widget _buildIntro() {
-    return Center(
+  /// 進場畫面 + START 按鈕（按下才顯示主選單）
+  Widget _buildIntroWithStart() {
+    return Stack(
       key: const ValueKey('intro'),
-      child: AspectRatio(
-        aspectRatio: 1, // 依素材調整
-        child: RivePlayer(
-          assetPath: _introAsset,
-          artboard: _introArtboard,
-          stateMachineName: _introStateMachine,
-          animation: _introAnimation,
+      fit: StackFit.expand,
+      children: [
+        // Rive 全畫面播放（可依素材比例改用 AspectRatio）
+        Center(
+          child: RivePlayer(
+            assetPath: _introAsset,
+            artboard: _introArtboard,
+            stateMachineName: _introStateMachine,
+            animation: _introAnimation,
+          ),
         ),
-      ),
+        // 半透明漸層遮罩（讓按鈕更顯眼，可移除）
+        IgnorePointer(
+          ignoring: true,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                stops: [0.0, 0.6, 1.0],
+                colors: [Colors.black54, Colors.transparent, Colors.transparent],
+              ),
+            ),
+          ),
+        ),
+        // 置底的 START 按鈕
+        SafeArea(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: FilledButton(
+                    onPressed: _onStartPressed,
+                    child: const Text('Start'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  // 3 個按鈕的主選單（到時間才顯示）
+  /// 3 個功能按鈕的主選單
   Widget _buildMenu(BuildContext context) {
     return ListView(
       key: const ValueKey('menu'),
