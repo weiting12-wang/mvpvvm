@@ -22,6 +22,7 @@ class Profile with _$Profile {
 
     // ✅ 新增 gender 欄位
     @Default(null) String? gender,
+    @Default(null) String? birthday,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);

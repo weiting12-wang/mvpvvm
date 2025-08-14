@@ -18,6 +18,8 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final TextEditingController _nameController = TextEditingController();
   bool _isButtonEnabled = false;
+    // 🆕 新增: 性別選擇變數
+  String? _selectedGender;
 
   @override
   void initState() {
@@ -39,6 +41,33 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         _isButtonEnabled = isEnabled;
       });
     }
+  }
+  // 🆕 新增: 性別選擇按鈕元件
+  Widget _buildGenderButton(String gender) {
+    final isSelected = _selectedGender == gender;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedGender = gender;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.white,
+          border: Border.all(color: Colors.blue),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          gender,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.blue,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -65,8 +94,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
               const SizedBox(height: 24),
               CommonTextFormField(
-                label: 'Your Name',
+                label: 'Child’s Name',
                 controller: _nameController,
+              ),
+              const SizedBox(height: 24),
+              // 🆕 新增: 性別選擇區域
+              const Text(
+                'Gender',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildGenderButton('Boy'),
+                  const SizedBox(width: 16),
+                  _buildGenderButton('Girl'),
+                ],
               ),
               const Spacer(),
               PrimaryButton(
@@ -86,9 +133,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     try {
       await ref.read(profileViewModelProvider.notifier).updateProfile(
             name: _nameController.text.trim(),
+            gender: _selectedGender, // 🆕 新增: 儲存性別
           );
       if (context.mounted) {
-        context.pushReplacement(Routes.main);
+        context.push(Routes.birthdayInput);
+        //context.pushReplacement(Routes.main);
       }
     } catch (error) {
       if (context.mounted) {

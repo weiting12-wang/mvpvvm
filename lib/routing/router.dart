@@ -12,6 +12,7 @@ import '../features/profile/model/profile.dart';
 import '../features/profile/ui/account_info_screen.dart';
 import '../features/profile/ui/appearances_screen.dart';
 import '../features/profile/ui/languages_screen.dart';
+import '../features/onboarding/ui/birthday_input_screen.dart';
 import 'routes.dart';
 
 enum SlideDirection {
@@ -129,6 +130,11 @@ final GoRouter router = GoRouter(
       pageBuilder: (context, state) => state.slidePage(
         const PremiumScreen(),
         direction: SlideDirection.up,
+      ),
+    ),
+    GoRoute(
+      path: Routes.birthdayInput,
+      pageBuilder: (context, state) => state.slidePage(const BirthdayInputScreen()
       ),
     ),
   ],

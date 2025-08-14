@@ -32,6 +32,7 @@ class ProfileViewModel extends _$ProfileViewModel {
     String? name,
     String? avatar,
     String? gender, // ✅ 新增
+    String? birthday,  // 🆕 加這一行
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -43,12 +44,14 @@ class ProfileViewModel extends _$ProfileViewModel {
         name: name ?? currentProfile.name,
         avatar: newAvatarPath ?? currentProfile.avatar,
         gender: gender ?? currentProfile.gender, // ✅ 這一行就是你要加的
+        birthday: birthday ?? currentProfile.birthday,  // 🆕 加這一行
       ) ??
           Profile(
             email: email,
             name: name,
             avatar: newAvatarPath,
             gender: gender, // ✅ fallback 建構時也要加
+            birthday: birthday,  // 🆕 加這一行
           );
       debugPrint(
           '${Constants.tag} [ProfileViewModel.updateProfile] $updatedProfile');

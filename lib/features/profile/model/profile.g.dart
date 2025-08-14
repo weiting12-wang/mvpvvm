@@ -19,6 +19,7 @@ _$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['expiry_date_premium'] as String),
       isLifetimePremium: json['is_lifetime_premium'] as bool? ?? null,
       gender: json['gender'] as String? ?? null,
+      birthday: json['birthday'] as String? ?? null,
     );
 
 Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
@@ -32,4 +33,5 @@ Map<String, dynamic> _$$ProfileImplToJson(_$ProfileImpl instance) =>
       'expiry_date_premium': instance.expiryDatePremium?.toIso8601String(),
       'is_lifetime_premium': instance.isLifetimePremium,
       'gender': instance.gender,
+      'birthday': instance.birthday,
     };
