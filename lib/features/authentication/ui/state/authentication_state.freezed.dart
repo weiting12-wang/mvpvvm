@@ -23,7 +23,14 @@ mixin _$AuthenticationState {
   @JsonKey(toJson: _authResponseToJson, fromJson: _authResponseFromJson)
   AuthResponse? get authResponse => throw _privateConstructorUsedError;
   bool get isRegisterSuccessfully => throw _privateConstructorUsedError;
-  bool get isSignInSuccessfully => throw _privateConstructorUsedError;
+  bool get isSignInSuccessfully =>
+      throw _privateConstructorUsedError; // 🆕 新增 EC2 相關狀態
+  bool get isEC2Verifying => throw _privateConstructorUsedError;
+  bool get isEC2Verified => throw _privateConstructorUsedError;
+  String? get ec2Status =>
+      throw _privateConstructorUsedError; // 'new_user', 'existing_user', 'token_invalid'
+  bool get profileComplete => throw _privateConstructorUsedError;
+  String? get ec2ErrorMessage => throw _privateConstructorUsedError;
 
   /// Serializes this AuthenticationState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,7 +52,12 @@ abstract class $AuthenticationStateCopyWith<$Res> {
       {@JsonKey(toJson: _authResponseToJson, fromJson: _authResponseFromJson)
       AuthResponse? authResponse,
       bool isRegisterSuccessfully,
-      bool isSignInSuccessfully});
+      bool isSignInSuccessfully,
+      bool isEC2Verifying,
+      bool isEC2Verified,
+      String? ec2Status,
+      bool profileComplete,
+      String? ec2ErrorMessage});
 }
 
 /// @nodoc
@@ -66,6 +78,11 @@ class _$AuthenticationStateCopyWithImpl<$Res, $Val extends AuthenticationState>
     Object? authResponse = freezed,
     Object? isRegisterSuccessfully = null,
     Object? isSignInSuccessfully = null,
+    Object? isEC2Verifying = null,
+    Object? isEC2Verified = null,
+    Object? ec2Status = freezed,
+    Object? profileComplete = null,
+    Object? ec2ErrorMessage = freezed,
   }) {
     return _then(_value.copyWith(
       authResponse: freezed == authResponse
@@ -80,6 +97,26 @@ class _$AuthenticationStateCopyWithImpl<$Res, $Val extends AuthenticationState>
           ? _value.isSignInSuccessfully
           : isSignInSuccessfully // ignore: cast_nullable_to_non_nullable
               as bool,
+      isEC2Verifying: null == isEC2Verifying
+          ? _value.isEC2Verifying
+          : isEC2Verifying // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isEC2Verified: null == isEC2Verified
+          ? _value.isEC2Verified
+          : isEC2Verified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      ec2Status: freezed == ec2Status
+          ? _value.ec2Status
+          : ec2Status // ignore: cast_nullable_to_non_nullable
+              as String?,
+      profileComplete: null == profileComplete
+          ? _value.profileComplete
+          : profileComplete // ignore: cast_nullable_to_non_nullable
+              as bool,
+      ec2ErrorMessage: freezed == ec2ErrorMessage
+          ? _value.ec2ErrorMessage
+          : ec2ErrorMessage // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -96,7 +133,12 @@ abstract class _$$AuthenticationStateImplCopyWith<$Res>
       {@JsonKey(toJson: _authResponseToJson, fromJson: _authResponseFromJson)
       AuthResponse? authResponse,
       bool isRegisterSuccessfully,
-      bool isSignInSuccessfully});
+      bool isSignInSuccessfully,
+      bool isEC2Verifying,
+      bool isEC2Verified,
+      String? ec2Status,
+      bool profileComplete,
+      String? ec2ErrorMessage});
 }
 
 /// @nodoc
@@ -115,6 +157,11 @@ class __$$AuthenticationStateImplCopyWithImpl<$Res>
     Object? authResponse = freezed,
     Object? isRegisterSuccessfully = null,
     Object? isSignInSuccessfully = null,
+    Object? isEC2Verifying = null,
+    Object? isEC2Verified = null,
+    Object? ec2Status = freezed,
+    Object? profileComplete = null,
+    Object? ec2ErrorMessage = freezed,
   }) {
     return _then(_$AuthenticationStateImpl(
       authResponse: freezed == authResponse
@@ -129,6 +176,26 @@ class __$$AuthenticationStateImplCopyWithImpl<$Res>
           ? _value.isSignInSuccessfully
           : isSignInSuccessfully // ignore: cast_nullable_to_non_nullable
               as bool,
+      isEC2Verifying: null == isEC2Verifying
+          ? _value.isEC2Verifying
+          : isEC2Verifying // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isEC2Verified: null == isEC2Verified
+          ? _value.isEC2Verified
+          : isEC2Verified // ignore: cast_nullable_to_non_nullable
+              as bool,
+      ec2Status: freezed == ec2Status
+          ? _value.ec2Status
+          : ec2Status // ignore: cast_nullable_to_non_nullable
+              as String?,
+      profileComplete: null == profileComplete
+          ? _value.profileComplete
+          : profileComplete // ignore: cast_nullable_to_non_nullable
+              as bool,
+      ec2ErrorMessage: freezed == ec2ErrorMessage
+          ? _value.ec2ErrorMessage
+          : ec2ErrorMessage // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -140,7 +207,12 @@ class _$AuthenticationStateImpl implements _AuthenticationState {
       {@JsonKey(toJson: _authResponseToJson, fromJson: _authResponseFromJson)
       this.authResponse,
       this.isRegisterSuccessfully = false,
-      this.isSignInSuccessfully = false});
+      this.isSignInSuccessfully = false,
+      this.isEC2Verifying = false,
+      this.isEC2Verified = false,
+      this.ec2Status,
+      this.profileComplete = false,
+      this.ec2ErrorMessage});
 
   factory _$AuthenticationStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$AuthenticationStateImplFromJson(json);
@@ -154,10 +226,25 @@ class _$AuthenticationStateImpl implements _AuthenticationState {
   @override
   @JsonKey()
   final bool isSignInSuccessfully;
+// 🆕 新增 EC2 相關狀態
+  @override
+  @JsonKey()
+  final bool isEC2Verifying;
+  @override
+  @JsonKey()
+  final bool isEC2Verified;
+  @override
+  final String? ec2Status;
+// 'new_user', 'existing_user', 'token_invalid'
+  @override
+  @JsonKey()
+  final bool profileComplete;
+  @override
+  final String? ec2ErrorMessage;
 
   @override
   String toString() {
-    return 'AuthenticationState(authResponse: $authResponse, isRegisterSuccessfully: $isRegisterSuccessfully, isSignInSuccessfully: $isSignInSuccessfully)';
+    return 'AuthenticationState(authResponse: $authResponse, isRegisterSuccessfully: $isRegisterSuccessfully, isSignInSuccessfully: $isSignInSuccessfully, isEC2Verifying: $isEC2Verifying, isEC2Verified: $isEC2Verified, ec2Status: $ec2Status, profileComplete: $profileComplete, ec2ErrorMessage: $ec2ErrorMessage)';
   }
 
   @override
@@ -170,13 +257,31 @@ class _$AuthenticationStateImpl implements _AuthenticationState {
             (identical(other.isRegisterSuccessfully, isRegisterSuccessfully) ||
                 other.isRegisterSuccessfully == isRegisterSuccessfully) &&
             (identical(other.isSignInSuccessfully, isSignInSuccessfully) ||
-                other.isSignInSuccessfully == isSignInSuccessfully));
+                other.isSignInSuccessfully == isSignInSuccessfully) &&
+            (identical(other.isEC2Verifying, isEC2Verifying) ||
+                other.isEC2Verifying == isEC2Verifying) &&
+            (identical(other.isEC2Verified, isEC2Verified) ||
+                other.isEC2Verified == isEC2Verified) &&
+            (identical(other.ec2Status, ec2Status) ||
+                other.ec2Status == ec2Status) &&
+            (identical(other.profileComplete, profileComplete) ||
+                other.profileComplete == profileComplete) &&
+            (identical(other.ec2ErrorMessage, ec2ErrorMessage) ||
+                other.ec2ErrorMessage == ec2ErrorMessage));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, authResponse, isRegisterSuccessfully, isSignInSuccessfully);
+      runtimeType,
+      authResponse,
+      isRegisterSuccessfully,
+      isSignInSuccessfully,
+      isEC2Verifying,
+      isEC2Verified,
+      ec2Status,
+      profileComplete,
+      ec2ErrorMessage);
 
   /// Create a copy of AuthenticationState
   /// with the given fields replaced by the non-null parameter values.
@@ -200,7 +305,12 @@ abstract class _AuthenticationState implements AuthenticationState {
       {@JsonKey(toJson: _authResponseToJson, fromJson: _authResponseFromJson)
       final AuthResponse? authResponse,
       final bool isRegisterSuccessfully,
-      final bool isSignInSuccessfully}) = _$AuthenticationStateImpl;
+      final bool isSignInSuccessfully,
+      final bool isEC2Verifying,
+      final bool isEC2Verified,
+      final String? ec2Status,
+      final bool profileComplete,
+      final String? ec2ErrorMessage}) = _$AuthenticationStateImpl;
 
   factory _AuthenticationState.fromJson(Map<String, dynamic> json) =
       _$AuthenticationStateImpl.fromJson;
@@ -211,7 +321,17 @@ abstract class _AuthenticationState implements AuthenticationState {
   @override
   bool get isRegisterSuccessfully;
   @override
-  bool get isSignInSuccessfully;
+  bool get isSignInSuccessfully; // 🆕 新增 EC2 相關狀態
+  @override
+  bool get isEC2Verifying;
+  @override
+  bool get isEC2Verified;
+  @override
+  String? get ec2Status; // 'new_user', 'existing_user', 'token_invalid'
+  @override
+  bool get profileComplete;
+  @override
+  String? get ec2ErrorMessage;
 
   /// Create a copy of AuthenticationState
   /// with the given fields replaced by the non-null parameter values.

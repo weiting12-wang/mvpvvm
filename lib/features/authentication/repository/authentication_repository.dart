@@ -16,13 +16,35 @@ import '/constants/constants.dart';
 import '/constants/languages.dart';
 import '/environment/env.dart';
 import '/main.dart';
-
+import 'package:dio/dio.dart'; // 
 part 'authentication_repository.g.dart';
 
 @riverpod
 AuthenticationRepository authenticationRepository(Ref ref) {
   return AuthenticationRepository();
 }
+
+// 🆕 新增 EC2 結果模型
+class EC2VerificationResult {
+  final String status; // 'token_invalid', 'new_user', 'existing_user'
+  final String? message;
+  final bool profileComplete;
+  
+  EC2VerificationResult({
+    required this.status,
+    this.message,
+    this.profileComplete = false,
+  });
+  
+  factory EC2VerificationResult.fromJson(Map<String, dynamic> json) {
+    return EC2VerificationResult(
+      status: json['status'],
+      message: json['message'],
+      profileComplete: json['profile_complete'] ?? false,
+    );
+  }
+}
+
 
 class AuthenticationRepository {
   const AuthenticationRepository();
@@ -42,7 +64,6 @@ class AuthenticationRepository {
       throw Exception(Languages.unexpectedErrorOccurred);
     }
   }
-
   Future<void> sendOtpEmail(String email) async {
     try {
       await supabase.auth.signUp(
@@ -53,6 +74,27 @@ class AuthenticationRepository {
       throw Exception(error.message);
     } catch (error) {
       throw Exception(Languages.unexpectedErrorOccurred);
+    }
+  }
+// 🆕 新增 EC2 驗證方法
+  Future<Map<String, dynamic>> verifyWithEC2(String supabaseToken) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://your-ec2-server.com/api/auth/verify'),
+        headers: {
+          'Authorization': 'Bearer $supabaseToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'token': supabaseToken}),
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('EC2 驗證失敗: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('EC2 驗證錯誤: $e');
     }
   }
 

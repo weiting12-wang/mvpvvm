@@ -46,21 +46,28 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     _passwordController.addListener(_validatePassword);
 
 
-    _authSubscription = supabase.auth.onAuthStateChange.listen((data) {
+    _authSubscription = supabase.auth.onAuthStateChange.listen((data) async { // 🆕 加 async
       final AuthChangeEvent event = data.event;
       final Session? session = data.session;
       debugPrint(
           '${Constants.tag} [WelcomeScreen.initState] Auth change: $event, session: $session');
-
       if (event == AuthChangeEvent.signedIn && session != null) {
-        ref
-            .read(profileViewModelProvider.notifier)
-            .updateProfile(email: session.user.email ?? '');
-        context.go(Routes.main);
+        // 🆕 觸發 EC2 驗證，而不是直接導航
+        ref.read(authenticationViewModelProvider.notifier)
+          .handleSupabaseAuthSuccess(session);
       }
     });
   }
-
+  // 👇 在這裡添加 _showEC2Error 方法
+  void _showEC2Error(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
   @override
   void dispose() {
     _emailController.removeListener(_validateEmail);
@@ -99,12 +106,45 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       }
 
       if (next is AsyncData) {
+        final authState = next.value!;
+        
         debugPrint(
-            '${Constants.tag} [WelcomeScreen.build] isRegisterSuccessfully = ${next.value?.isRegisterSuccessfully}, isSignInSuccessfully = ${next.value?.isSignInSuccessfully}');
-        if (next.value?.isRegisterSuccessfully == true) {
+            '${Constants.tag} [WelcomeScreen.build] isRegisterSuccessfully = ${authState.isRegisterSuccessfully}, isSignInSuccessfully = ${authState.isSignInSuccessfully}');
+        
+        // 處理 EC2 驗證錯誤
+        if (authState.ec2ErrorMessage != null) {
+          _showEC2Error(authState.ec2ErrorMessage!);
+        }
+        
+        // 處理 EC2 驗證完成後的導航（主要流程）
+        if (authState.isEC2Verified && !authState.isEC2Verifying) {
+          switch (authState.ec2Status) {
+            case 'new_user':
+              context.go(Routes.onboarding);
+              break;
+            case 'existing_user':
+              if (authState.profileComplete) {
+                context.go(Routes.main);
+              } else {
+                context.go(Routes.onboarding);
+              }
+              break;
+          }
+        }
+
+        // 現有用戶的註冊成功導航
+        if (authState.isRegisterSuccessfully) {
           context.pushReplacement(Routes.onboarding);
-        } else if (next.value?.isSignInSuccessfully == true) {
-          context.pushReplacement(Routes.main);
+        } 
+        // 已註冊用戶的備用導航（防護機制）
+        else if (authState.isSignInSuccessfully && !authState.isEC2Verifying) {
+          if (authState.ec2Status == null) {  // 如果後端沒返回狀態
+            if (authState.profileComplete) {
+              context.pushReplacement(Routes.main);
+            } else {
+              context.pushReplacement(Routes.onboarding);
+            }
+          }
         }
       }
     });

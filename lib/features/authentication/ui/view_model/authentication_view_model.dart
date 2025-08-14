@@ -141,4 +141,83 @@ Future<void> sendOtp(String email) async {
       ),
     );
   }
+
+// 🆕 新增處理 Supabase Auth 成功後的 EC2 驗證
+  Future<void> handleSupabaseAuthSuccess(Session session) async {
+    try {
+      // 設定 EC2 驗證中狀態
+      state = AsyncData(
+        state.value?.copyWith(
+          isEC2Verifying: true,
+          authResponse: AuthResponse(session: session, user: session.user),
+        ) ?? AuthenticationState(
+          isEC2Verifying: true,
+          authResponse: AuthResponse(session: session, user: session.user),
+        ),
+      );
+
+      // 更新基本 profile
+      ref.read(profileViewModelProvider.notifier)
+         .updateProfile(email: session.user.email ?? '');
+
+      // 進行 EC2 驗證
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      final ec2Result = await authRepo.verifyWithEC2(session.accessToken);
+
+      // 處理 EC2 結果
+      final ec2Status = ec2Result['status'] as String;
+      final ec2ProfileComplete = ec2Result['profile_complete'] as bool? ?? false;
+      final isNewUser = ec2Status == 'new_user';
+
+      state = AsyncData(
+        state.value!.copyWith(
+          isEC2Verifying: false,
+          isEC2Verified: true,
+          ec2Status: ec2Status,
+          // 統一邏輯：新用戶肯定不完整，舊用戶看 EC2 回應
+          profileComplete: isNewUser ? false : ec2ProfileComplete,
+          ec2ErrorMessage: null,
+        ),
+      );
+
+    } catch (e) {
+      state = AsyncData(
+        state.value?.copyWith(
+          isEC2Verifying: false,
+          isEC2Verified: false,
+          ec2ErrorMessage: e.toString(),
+        ) ?? AuthenticationState(
+          ec2ErrorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  // 🆕 重試 EC2 驗證
+  Future<void> retryEC2Verification() async {
+    final session = state.value?.authResponse?.session;
+    if (session != null) {
+      await handleSupabaseAuthSuccess(session);
+    }
+  }
+
+  // 🆕 處理 EC2 錯誤（簡化版）
+  void handleEC2Error(String message, {bool canRetry = true}) {
+    if (canRetry) {
+      // 網絡錯誤等可重試的情況
+      state = AsyncData(
+        state.value?.copyWith(
+          isEC2Verifying: false,
+          isEC2Verified: false,
+          ec2ErrorMessage: message,
+        ) ?? AuthenticationState(ec2ErrorMessage: message),
+      );
+    } else {
+      // token_invalid 等需要重新開始的情況
+      state = const AsyncData(AuthenticationState());
+    }
+  }
+
+
+  
 }
