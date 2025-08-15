@@ -97,9 +97,7 @@
   "restore_purchases_error": "Failed to restore purchases",
 
   "enlightenary_game":"Enlightenary Game",
-  "game1_StateMachine": "Game1 StateMachine",
-  "game2_SimpleAnimation": "Game2 SimpleAnimation",
-  "game3_Artboard_SM": "Game3 Artboard+SM",
+  "game1": "Game1",
   "gameStart": "Start Game"
 
 }

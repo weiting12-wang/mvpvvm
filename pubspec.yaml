@@ -106,6 +106,7 @@ flutter:
     - assets/images/
     - assets/translations/
     - assets/rive/vehicles.riv
+    - assets/rive/dogchef.riv
     - assets/videos/intro.mov
 
   # To add assets to your application, add an assets section, like this:
