@@ -16,7 +16,7 @@ class Assets {
 
 //Rive assets
 class RiveAssets {
-  static const rive_game_into = 'assets/rive/vehicles.riv';
+  static const rive_game_intro = 'assets/rive/vehicles.riv';
   static const rive_game_1 = 'assets/rive/dogchef.riv';
   
 }

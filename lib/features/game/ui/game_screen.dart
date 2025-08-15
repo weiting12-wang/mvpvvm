@@ -13,7 +13,7 @@ class RiveMenuScreen extends StatefulWidget {
 
 class _RiveMenuScreenState extends State<RiveMenuScreen> {
   // 進場動畫設定（依你的素材名稱調整）
-  static const _introAsset = RiveAssets.rive_game_into;
+  static const _introAsset = RiveAssets.rive_game_intro;
   static const String? _introArtboard = null;       // 例: 'Intro'
   static const String? _introStateMachine = null;   // 例: 'IntroSM'
   static const String? _introAnimation = 'intro';   // 例: 'intro'
@@ -78,7 +78,7 @@ class _RiveMenuScreenState extends State<RiveMenuScreen> {
                   height: 56,
                   child: FilledButton(
                     onPressed: _onStartPressed,
-                    child: const Text('Start'),
+                    child: Text(Languages.gameStart),
                   ),
                 ),
               ),

@@ -34,9 +34,37 @@ class _DogControlScreenState extends State<DogControlScreen> {
   Artboard? _artboard;
   StateMachineController? _controller;
 
-  SMITrigger? _blink;
   SMITrigger? _jump;
-  SMIBool? _run;
+  
+  // === 要疊在前景的照片清單 ===
+  final List<String> _photos = const [
+    'assets/images/game1_words/L001.png',
+    'assets/images/game1_words/L002.png',
+    'assets/images/game1_words/L003.png',
+    'assets/images/game1_words/L004.png',
+  ];
+  int _photoIndex = 0;
+
+  void _nextPhoto() {
+    setState(() {
+      _photoIndex = (_photoIndex + 1) % _photos.length;
+    });
+  }
+
+  void _onRiveInit(Artboard artboard) {
+    if (widget.stateMachineName.isEmpty) return;
+    final c = StateMachineController.fromArtboard(artboard, widget.stateMachineName);
+    if (c == null) return;
+    artboard.addController(c);
+    _controller = c;
+
+    // 依你的 Rive input 名稱取值（示例：blink/click/run）
+    // 如果名稱不同，請改成你的 input 名稱
+    _jump = c.inputs.whereType<SMITrigger>().cast<SMITrigger?>().firstWhere(
+          (i) => i?.name == 'click' || i?.name == 'jump',
+          orElse: () => null,
+        );
+  }
 
   bool get _isReady => _artboard != null && _controller != null;
 
@@ -62,10 +90,8 @@ class _DogControlScreenState extends State<DogControlScreen> {
       art.addController(controller);
 
       // 取得 Inputs（名稱需與 Rive 編輯器一致）
-      _blink = controller.findInput<bool>(widget.inputBlink) as SMITrigger?;
       _jump  = controller.findInput<bool>(widget.inputJump) as SMITrigger?;
-      _run   = controller.findInput<bool>(widget.inputRun)  as SMIBool?;
-
+      
       if (!mounted) return;
       setState(() {
         _artboard = art;
@@ -81,83 +107,100 @@ class _DogControlScreenState extends State<DogControlScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  void _onBlink() {
-    if (_blink == null) return _showError('找不到 Trigger：${widget.inputBlink}');
-    _blink!.fire();
-  }
-
   void _onJump() {
     if (_jump == null) return _showError('找不到 Trigger：${widget.inputJump}');
     _jump!.fire();
   }
 
-  void _onRunToggle() {
-    if (_run == null) return _showError('找不到 Bool：${widget.inputRun}');
-    _run!.value = !(_run!.value);
-    setState(() {}); // 讓按鈕文字更新
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true, // 讓內容延伸到 AppBar 後
+       // 若想透明 AppBar，可改成透明樣式
       appBar: AppBar(
         backgroundColor: Colors.transparent, // 透明
-        elevation: 0,                         // 去除陰影
-        scrolledUnderElevation: 0,            // 移除滾動陰影 (M3)
-        surfaceTintColor: Colors.transparent, // 移除表面著色 (M3)
-        systemOverlayStyle: SystemUiOverlayStyle.light, // 狀態列白字圖示
-        title: Text(
-          Languages.riveGame1,
-          style: const TextStyle(color: Colors.white),
+        elevation: 0,
+        scrolledUnderElevation: 0,            // M3 移除滾動陰影
+        surfaceTintColor: Colors.transparent, // M3 移除表面色
+        systemOverlayStyle: SystemUiOverlayStyle.light, // 狀態列白字圖示（深色背景用）
+        title: const Text(
+          ' ', // 或你的標題文字；若要白色字：style: TextStyle(color: Colors.white),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Stack(
-      fit: StackFit.expand,
-      children: [
-        // 全螢幕 Rive 畫面
-        _isReady
-            ? Rive(
-                artboard: _artboard!,
-                fit: BoxFit.contain, // 或 BoxFit.cover 看需求
-              )
-            : const Center(child: CircularProgressIndicator()),
-        // 底部控制按鈕列（半透明背景）
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            color: Colors.black54,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: Column(
+        children: [
+          // 上半部：Rive + 前景照片
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ===== 底層：Rive 畫面 =====
+                _buildRive(),
+
+                // ===== 前景：可切換的照片 =====
+                // IgnorePointer 讓按鈕事件不被圖片攔截
+                IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    child: Align(
+                      alignment: const Alignment(0, -2), // 往上移：-0.5 可自行調整
+                      child: Image.asset(
+                        _photos[_photoIndex],
+                        key: ValueKey(_photos[_photoIndex]),
+                        fit: BoxFit.contain,
+                        // width: 280, height: 280, // 需要固定大小可解註
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 下半部：控制列（含「換照片」）
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
                 children: [
-                  FilledButton.icon(
-                    onPressed: _isReady ? _onBlink : null,
-                    icon: const Icon(Icons.visibility),
-                    label: const Text('眨眼'),
+                  ElevatedButton(
+                    onPressed: () => _jump?.fire(),
+                    child: const Text('跳躍'),
                   ),
+                  // 這顆按鈕：切換前景照片
                   FilledButton.icon(
-                    onPressed: _isReady ? _onJump : null,
-                    icon: const Icon(Icons.arrow_upward),
-                    label: const Text('跳'),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _isReady ? _onRunToggle : null,
-                    icon: const Icon(Icons.directions_run),
-                    label: Text(_run?.value == true ? '停止跑' : '開始跑'),
+                    onPressed: _nextPhoto,
+                    icon: const Icon(Icons.image),
+                    label: const Text('換照片'),
                   ),
                 ],
               ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
+
+Widget _buildRive() {
+  // 直接填滿整個可用空間
+  return SizedBox.expand(
+    child: RiveAnimation.asset(
+      widget.assetPath,
+      artboard: widget.artboardName.isEmpty ? null : widget.artboardName,
+      stateMachines: widget.stateMachineName.isEmpty ? const [] : [widget.stateMachineName],
+      fit: BoxFit.cover,        // 關鍵：全螢幕填滿（可能裁切）
+      alignment: Alignment.center,
+      onInit: _onRiveInit,
+    ),
+  );
+}
 
   @override
   void dispose() {

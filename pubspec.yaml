@@ -104,6 +104,10 @@ flutter:
     - assets/animations/
     - assets/google_fonts/
     - assets/images/
+    - assets/images/game1_words/L001.png
+    - assets/images/game1_words/L002.png
+    - assets/images/game1_words/L003.png
+    - assets/images/game1_words/L004.png
     - assets/translations/
     - assets/rive/vehicles.riv
     - assets/rive/dogchef.riv
