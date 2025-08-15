@@ -13,11 +13,19 @@ _$AuthenticationStateImpl _$$AuthenticationStateImplFromJson(
           _authResponseFromJson(json['authResponse'] as Map<String, dynamic>?),
       isRegisterSuccessfully: json['isRegisterSuccessfully'] as bool? ?? false,
       isSignInSuccessfully: json['isSignInSuccessfully'] as bool? ?? false,
+      isEC2SignInSuccessfully:
+          json['isEC2SignInSuccessfully'] as bool? ?? false,
+      profileComplete: json['profileComplete'] as bool? ?? false,
+      ec2ErrorMessage: json['ec2ErrorMessage'] as String?,
+      ec2AccessToken: json['ec2AccessToken'] as String?,
       isEC2Verifying: json['isEC2Verifying'] as bool? ?? false,
       isEC2Verified: json['isEC2Verified'] as bool? ?? false,
       ec2Status: json['ec2Status'] as String?,
-      profileComplete: json['profileComplete'] as bool? ?? false,
-      ec2ErrorMessage: json['ec2ErrorMessage'] as String?,
+      isPasswordResetEmailSent:
+          json['isPasswordResetEmailSent'] as bool? ?? false,
+      isPasswordResetSuccessfully:
+          json['isPasswordResetSuccessfully'] as bool? ?? false,
+      passwordResetError: json['passwordResetError'] as String?,
     );
 
 Map<String, dynamic> _$$AuthenticationStateImplToJson(
@@ -26,9 +34,14 @@ Map<String, dynamic> _$$AuthenticationStateImplToJson(
       'authResponse': _authResponseToJson(instance.authResponse),
       'isRegisterSuccessfully': instance.isRegisterSuccessfully,
       'isSignInSuccessfully': instance.isSignInSuccessfully,
+      'isEC2SignInSuccessfully': instance.isEC2SignInSuccessfully,
+      'profileComplete': instance.profileComplete,
+      'ec2ErrorMessage': instance.ec2ErrorMessage,
+      'ec2AccessToken': instance.ec2AccessToken,
       'isEC2Verifying': instance.isEC2Verifying,
       'isEC2Verified': instance.isEC2Verified,
       'ec2Status': instance.ec2Status,
-      'profileComplete': instance.profileComplete,
-      'ec2ErrorMessage': instance.ec2ErrorMessage,
+      'isPasswordResetEmailSent': instance.isPasswordResetEmailSent,
+      'isPasswordResetSuccessfully': instance.isPasswordResetSuccessfully,
+      'passwordResetError': instance.passwordResetError,
     };

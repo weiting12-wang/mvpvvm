@@ -11,12 +11,21 @@ class AuthenticationState with _$AuthenticationState {
     @JsonKey(toJson: _authResponseToJson, fromJson: _authResponseFromJson) AuthResponse? authResponse,
     @Default(false) bool isRegisterSuccessfully,
     @Default(false) bool isSignInSuccessfully,
-        // 🆕 新增 EC2 相關狀態
+    // 🆕 EC2 登入相關狀態
+    @Default(false) bool isEC2SignInSuccessfully,
+    @Default(false) bool profileComplete,
+    String? ec2ErrorMessage,
+    String? ec2AccessToken,
+    
+    // 原本的 EC2 相關狀態 (保留)
     @Default(false) bool isEC2Verifying,
     @Default(false) bool isEC2Verified,
     String? ec2Status, // 'new_user', 'existing_user', 'token_invalid'
-    @Default(false) bool profileComplete,
-    String? ec2ErrorMessage,
+    
+    // 🆕 忘記密碼相關狀態
+    @Default(false) bool isPasswordResetEmailSent,
+    @Default(false) bool isPasswordResetSuccessfully,
+    String? passwordResetError,
   }) = _AuthenticationState;
 
   factory AuthenticationState.fromJson(Map<String, Object?> json) =>

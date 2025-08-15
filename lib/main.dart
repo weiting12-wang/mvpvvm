@@ -85,9 +85,35 @@ final supabase = Supabase.instance.client;
 
 final supabaseAuthListenerProvider = Provider<void>((ref) {
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-    if (data.event == AuthChangeEvent.signedIn && data.session != null) {
-      debugPrint('[Supabase] Magic Link 登入成功：${data.session?.user?.email}');
-      router.go('/main');
+    final event = data.event;
+    final session = data.session;
+    
+    debugPrint('[Supabase] Auth Event: $event, User: ${session?.user?.email}');
+    
+    switch (event) {
+      case AuthChangeEvent.signedIn:
+        if (session != null) {
+          debugPrint('[Supabase] Magic Link 登入成功：${session.user?.email}');
+          router.go('/main');
+        }
+        break;
+        
+      case AuthChangeEvent.passwordRecovery:
+        if (session != null) {
+          debugPrint('[Supabase] Password Recovery 事件觸發');
+          debugPrint('[Supabase] Access Token: ${session.accessToken.substring(0, 20)}...');
+          router.go('/reset-password');
+        }
+        break;
+        
+      case AuthChangeEvent.signedOut:
+        debugPrint('[Supabase] 使用者登出');
+        router.go('/welcome');
+        break;
+        
+      default:
+        debugPrint('[Supabase] 其他 Auth 事件: $event');
+        break;
     }
   });
 });

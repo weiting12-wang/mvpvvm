@@ -24,30 +24,124 @@ AuthenticationRepository authenticationRepository(Ref ref) {
   return AuthenticationRepository();
 }
 
-// 🆕 新增 EC2 結果模型
-class EC2VerificationResult {
-  final String status; // 'token_invalid', 'new_user', 'existing_user'
+// 🆕 新增 EC2 登入結果模型
+class EC2SignInResult {
+  final String status; // 'success', 'invalid_password', 'user_not_found', 'account_disabled', etc.
   final String? message;
+  final String? token;
   final bool profileComplete;
+  final Map<String, dynamic>? profileData;
   
-  EC2VerificationResult({
+  EC2SignInResult({
     required this.status,
     this.message,
+    this.token,
     this.profileComplete = false,
+    this.profileData,
   });
   
-  factory EC2VerificationResult.fromJson(Map<String, dynamic> json) {
-    return EC2VerificationResult(
-      status: json['status'],
+  factory EC2SignInResult.fromJson(Map<String, dynamic> json) {
+    return EC2SignInResult(
+      status: json['status'] ?? 'error',
       message: json['message'],
+      token: json['token'],
       profileComplete: json['profile_complete'] ?? false,
+      profileData: json['profile_data'],
     );
+  }
+  
+  // 🆕 轉換為 Map 供 ViewModel 使用
+  Map<String, dynamic> toMap() {
+    return {
+      'status': status,
+      'message': message,
+      'token': token,
+      'profile_complete': profileComplete,
+      'profile_data': profileData,
+    };
   }
 }
 
 
 class AuthenticationRepository {
   const AuthenticationRepository();
+  // 🆕 新增 EC2 帳密登入方法
+  Future<Map<String, dynamic>> signInWithEC2Password({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://your-ec2-server.com/api/auth/signin'), // 🔴 替換為你的 EC2 URL
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+      
+      final responseData = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        final result = EC2SignInResult.fromJson(responseData);
+        return result.toMap();
+      } else {
+        // 🆕 根據 HTTP 狀態碼處理不同錯誤
+        switch (response.statusCode) {
+          case 401:
+            if (responseData['code'] == 'INVALID_PASSWORD') {
+              throw Exception('invalid_password');
+            } else if (responseData['code'] == 'USER_NOT_FOUND') {
+              throw Exception('user_not_found');
+            }
+            break;
+          case 403:
+            throw Exception('account_disabled');
+          case 429:
+            throw Exception('too_many_attempts');
+          default:
+            throw Exception('server_error');
+        }
+        
+        throw Exception('登錄失敗，稍後再試');
+      }
+    } catch (e) {
+      if (e.toString().contains('invalid_password') ||
+          e.toString().contains('user_not_found') ||
+          e.toString().contains('account_disabled')) {
+        rethrow; // 保持原有錯誤訊息
+      }
+      throw Exception('網路連線錯誤，請檢查網路設定');
+    }
+  }
+
+  // 🆕 新增同步密碼到 EC2 方法
+  Future<void> syncPasswordToEC2({
+    required String newPassword,
+    required String supabaseToken,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://your-ec2-server.com/api/auth/sync-password'), // 🔴 替換為你的 EC2 URL
+        headers: {
+          'Authorization': 'Bearer $supabaseToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'new_password': newPassword,
+        }),
+      );
+      
+      if (response.statusCode != 200) {
+        final responseData = jsonDecode(response.body);
+        throw Exception(responseData['message'] ?? 'EC2 密碼同步失敗');
+      }
+    } catch (e) {
+      throw Exception('密碼同步失敗: ${e.toString()}');
+    }
+  }
 
   Future<void> signInWithMagicLink(String email) async {
     // TODO: fake data

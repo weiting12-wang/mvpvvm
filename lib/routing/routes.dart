@@ -12,4 +12,8 @@ class Routes {
   static const languages = '/languages';
   static const premium = '/premium';
   static const birthdayInput = '/birthday-input';
+
+    // 🆕 新增忘記密碼相關路由
+  static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
 }

@@ -18,6 +18,173 @@ class AuthenticationViewModel extends _$AuthenticationViewModel {
     return const AuthenticationState();
   }
 
+  // 🆕 EC2 密碼登入
+  Future<void> signInWithEC2Password({
+    required String email,
+    required String password,
+  }) async {
+    state = const AsyncValue.loading();
+    final authRepo = ref.read(authenticationRepositoryProvider);
+    
+    try {
+      final result = await authRepo.signInWithEC2Password(
+        email: email,
+        password: password,
+      );
+      
+      debugPrint('${Constants.tag} [AuthenticationViewModel.signInWithEC2Password] result: $result');
+      
+      // 🆕 處理 EC2 登入結果
+      if (result['status'] == 'success') {
+        // 登入成功，更新狀態
+        state = AsyncData(AuthenticationState(
+          isEC2SignInSuccessfully: true,
+          profileComplete: result['profile_complete'] ?? false,
+          ec2AccessToken: result['token'],
+        ));
+        
+        // 🆕 更新本地 Profile
+        ref.read(profileViewModelProvider.notifier).updateProfile(
+          email: email,
+          name: result['profile_data']?['name'],
+          gender: result['profile_data']?['gender'],
+          birthday: result['profile_data']?['birthday'],
+          avatar: result['profile_data']?['avatar'],
+        );
+        
+        // 🆕 標記為已登入
+        await authRepo.setIsLogin(true);
+        
+      } else {
+        // 登入失敗，統一錯誤處理
+        throw Exception('登錄失敗，稍後再試');
+      }
+      
+    } catch (error, stackTrace) {
+      debugPrint('${Constants.tag} [AuthenticationViewModel.signInWithEC2Password] error: $error');
+      state = AsyncError(error.toString(), stackTrace);
+    }
+  }
+
+  // 🆕 發送重設密碼 Email (使用 Supabase)
+  Future<void> sendPasswordResetEmail(String email) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      final supabase = Supabase.instance.client;
+      
+      // 🆕 使用 Supabase 發送重設密碼 Email
+      await supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'io.supabase.flutter://reset-password', // 專用的重設密碼連結
+      );
+      
+      // 🆕 發送成功
+      state = AsyncData(state.value?.copyWith(
+        isPasswordResetEmailSent: true,
+        passwordResetError: null,
+      ) ?? const AuthenticationState(
+        isPasswordResetEmailSent: true,
+      ));
+      
+    } catch (error, stackTrace) {
+      debugPrint('${Constants.tag} [AuthenticationViewModel.sendPasswordResetEmail] error: $error');
+      
+      // 🆕 處理不同類型的錯誤
+      String errorMessage = error.toString();
+      if (errorMessage.contains('not found') || errorMessage.contains('not registered')) {
+        errorMessage = '此信箱未註冊';
+      } else if (errorMessage.contains('rate') || errorMessage.contains('limit')) {
+        errorMessage = '發送過於頻繁，請稍後再試';
+      }
+      
+      state = AsyncData(state.value?.copyWith(
+        isPasswordResetEmailSent: false,
+        passwordResetError: errorMessage,
+      ) ?? AuthenticationState(
+        isPasswordResetEmailSent: false,
+        passwordResetError: errorMessage,
+      ));
+      
+      // 🆕 拋出錯誤讓 UI 處理
+      throw Exception(errorMessage);
+    }
+  }
+
+  // 🆕 重設密碼 (Supabase + EC2 同步)
+  Future<void> resetPassword({
+    required String newPassword,
+    String? token,
+    String? accessToken,
+  }) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      final supabase = Supabase.instance.client;
+      
+      // 🆕 Step 1: 使用 Supabase 更新密碼
+      await supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+      
+      // 🆕 Step 2: 取得當前 session
+      final session = supabase.auth.currentSession;
+      if (session == null) {
+        throw Exception('Session not found');
+      }
+      
+      // 🆕 Step 3: 同步新密碼到 EC2
+      final authRepo = ref.read(authenticationRepositoryProvider);
+      await authRepo.syncPasswordToEC2(
+        newPassword: newPassword,
+        supabaseToken: session.accessToken,
+      );
+      
+      // 🆕 Step 4: 更新 Profile (用戶已登入狀態)
+      final userEmail = session.user.email;
+      if (userEmail != null) {
+        ref.read(profileViewModelProvider.notifier).updateProfile(
+          email: userEmail,
+        );
+        
+        // 🆕 標記為已登入
+        await authRepo.setIsLogin(true);
+      }
+      
+      // 🆕 重設成功
+      state = AsyncData(state.value?.copyWith(
+        isPasswordResetSuccessfully: true,
+        passwordResetError: null,
+        isSignInSuccessfully: true, // 重設後自動登入
+      ) ?? const AuthenticationState(
+        isPasswordResetSuccessfully: true,
+        isSignInSuccessfully: true,
+      ));
+      
+    } catch (error, stackTrace) {
+      debugPrint('${Constants.tag} [AuthenticationViewModel.resetPassword] error: $error');
+      
+      String errorMessage = error.toString();
+      if (errorMessage.contains('invalid') || errorMessage.contains('expired')) {
+        errorMessage = '重設連結已失效，請重新申請';
+      } else if (errorMessage.contains('weak')) {
+        errorMessage = '密碼強度不足，請使用更複雜的密碼';
+      }
+      
+      state = AsyncData(state.value?.copyWith(
+        isPasswordResetSuccessfully: false,
+        passwordResetError: errorMessage,
+      ) ?? AuthenticationState(
+        isPasswordResetSuccessfully: false,
+        passwordResetError: errorMessage,
+      ));
+      
+      throw Exception(errorMessage);
+    }
+  }
+
+
+
 Future<void> signInWithMagicLink(String email) async {
   state = const AsyncValue.loading();
 
