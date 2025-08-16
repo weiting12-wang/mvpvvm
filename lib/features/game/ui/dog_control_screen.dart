@@ -11,15 +11,17 @@ class DogControlScreen extends StatefulWidget {
     super.key,
     this.assetPath = RiveAssets.rive_game_1,
     this.artboardName = 'Dog',
-    this.stateMachineName = 'DogSM',
+    this.dogStateMachineName = 'DogSM',
+    this.pizzaStateMachineName = 'PizzaSM',
     this.inputBlink = 'blink',
-    this.inputJump = 'click',
+    this.inputJump = 'game1_dog_jump',
     this.inputRun = 'run',
   });
 
   final String assetPath;
   final String artboardName;
-  final String stateMachineName;
+  final String dogStateMachineName;
+  final String pizzaStateMachineName;
 
   /// State Machine Inputs 名稱（需與 Rive 檔一致）
   final String inputBlink; // Trigger
@@ -32,7 +34,7 @@ class DogControlScreen extends StatefulWidget {
 
 class _DogControlScreenState extends State<DogControlScreen> {
   Artboard? _artboard;
-  StateMachineController? _controller;
+  StateMachineController? _dogController,_pizzaController;
 
   SMITrigger? _jump;
   
@@ -45,62 +47,62 @@ class _DogControlScreenState extends State<DogControlScreen> {
   ];
   int _photoIndex = 0;
 
+   // 照片在畫面中的對齊（往上移一點：y = -0.5；置中改 Alignment.center）
+  static const Alignment _photoAlignment = Alignment(0, -2);
+  double _photoScale = 1; // 照片縮放比例（初始為 1）
+  
+  // 高亮綠色邊框狀態
+  bool _highlightBorder = false;
+  // 發光框相對於照片的縮放比例：1.0 = 跟照片一樣大；越小越縮
+  double _glowBoxFactor_height = 0.3;
+  double _glowBoxFactor_width = 0.75;
+  double _glowBoxFactor = 1;
+
+  // （可調）邊框與光暈強度
+  double _borderWidth = 25.0;
+  double _glowBlur = 12.0;
+  double _glowSpread = 0.5;
+  double _cornerRadius = 10.0;
+
   void _nextPhoto() {
     setState(() {
       _photoIndex = (_photoIndex + 1) % _photos.length;
+      //_photoScale = 1;
     });
   }
 
   void _onRiveInit(Artboard artboard) {
-    if (widget.stateMachineName.isEmpty) return;
-    final c = StateMachineController.fromArtboard(artboard, widget.stateMachineName);
-    if (c == null) return;
-    artboard.addController(c);
-    _controller = c;
+    try {
+      
+      if (widget.dogStateMachineName.isEmpty ||  widget.pizzaStateMachineName.isEmpty) return;
+      final dogC = StateMachineController.fromArtboard(artboard, widget.dogStateMachineName);
+      //final pizzaC = StateMachineController.fromArtboard(artboard, widget.pizzaStateMachineName);
+      if ( dogC== null) return;
+      artboard.addController(dogC);
+      //artboard.addController(pizzaC);
+      _dogController = dogC;
+      //_pizzaController = pizzaC;
 
-    // 依你的 Rive input 名稱取值（示例：blink/click/run）
-    // 如果名稱不同，請改成你的 input 名稱
-    _jump = c.inputs.whereType<SMITrigger>().cast<SMITrigger?>().firstWhere(
-          (i) => i?.name == 'click' || i?.name == 'jump',
-          orElse: () => null,
-        );
+      // 依你的 Rive input 名稱取值（示例：blink/click/run）
+      // 如果名稱不同，請改成你的 input 名稱
+      //     // 取得 Inputs（名稱需與 Rive 編輯器一致）
+      _jump  = dogC.findInput<bool>(widget.inputJump) as SMITrigger?;
+
+      if (!mounted) return;
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      _showError('Rive 初始化失敗：$e');
+    }
+    
+ 
   }
 
-  bool get _isReady => _artboard != null && _controller != null;
+  bool get _isReady => _artboard != null && _dogController != null;
 
   @override
   void initState() {
     super.initState();
-    _loadRive();
-  }
-
-  Future<void> _loadRive() async {
-    try {
-      final data = await rootBundle.load(widget.assetPath);
-      final file = RiveFile.import(data);
-      final art = file.artboardByName(widget.artboardName) ?? file.mainArtboard;
-      final controller = StateMachineController.fromArtboard(art, widget.stateMachineName);
-
-      if (controller == null) {
-        if (!mounted) return;
-        _showError('找不到 StateMachine：${widget.stateMachineName}');
-        return;
-      }
-
-      art.addController(controller);
-
-      // 取得 Inputs（名稱需與 Rive 編輯器一致）
-      _jump  = controller.findInput<bool>(widget.inputJump) as SMITrigger?;
-      
-      if (!mounted) return;
-      setState(() {
-        _artboard = art;
-        _controller = controller;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      _showError('載入 Rive 失敗：$e');
-    }
   }
 
   void _showError(String msg) {
@@ -138,24 +140,60 @@ class _DogControlScreenState extends State<DogControlScreen> {
                 _buildRive(),
 
                 // ===== 前景：可切換的照片 =====
-                // IgnorePointer 讓按鈕事件不被圖片攔截
-                IgnorePointer(
-                  ignoring: true,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: Align(
-                      alignment: const Alignment(0, -2), // 往上移：-0.5 可自行調整
-                      child: Image.asset(
-                        _photos[_photoIndex],
-                        key: ValueKey(_photos[_photoIndex]),
-                        fit: BoxFit.contain,
-                        // width: 280, height: 280, // 需要固定大小可解註
+                Align(
+  alignment: _photoAlignment,
+  child: AnimatedSwitcher(
+    duration: const Duration(milliseconds: 200),
+    switchInCurve: Curves.easeOut,
+    switchOutCurve: Curves.easeIn,
+    child: Transform.scale(
+      key: ValueKey('photo_${_photos[_photoIndex]}_$_photoScale$_highlightBorder$_glowBoxFactor'),
+      scale: _photoScale,
+      alignment: Alignment.center,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          
+          // ① 上層：原本的照片
+          ClipRRect(
+            borderRadius: BorderRadius.circular(_cornerRadius - 2),
+            child: Image.asset(
+              _photos[_photoIndex],
+              fit: BoxFit.contain,
+            ),
+          ),
+
+          // ② 上層：縮小後的發光容器（只在高亮時顯示）
+          // ② 底層：縮小後的發光容器（只在高亮時顯示）
+          if (_highlightBorder)
+            FractionallySizedBox(
+              widthFactor: _glowBoxFactor_width,
+              heightFactor: _glowBoxFactor_height,
+              child: IgnorePointer(
+                ignoring: true,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(_cornerRadius),
+                    border: Border.all(color: Colors.greenAccent, width: _borderWidth),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.transparent,
+                        blurRadius: _glowBlur,
+                        spreadRadius: _glowSpread,
                       ),
-                    ),
+                    ],
                   ),
                 ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  ),
+),
+
               ],
             ),
           ),
@@ -170,7 +208,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
                 runSpacing: 12,
                 children: [
                   ElevatedButton(
-                    onPressed: () => _jump?.fire(),
+                    onPressed: () => _onJump(),
                     child: const Text('跳躍'),
                   ),
                   // 這顆按鈕：切換前景照片
@@ -178,6 +216,13 @@ class _DogControlScreenState extends State<DogControlScreen> {
                     onPressed: _nextPhoto,
                     icon: const Icon(Icons.image),
                     label: const Text('換照片'),
+                  ),
+                  // 邊框高亮切換
+                  FilledButton.icon( // [NEW]
+                    onPressed: () =>
+                        setState(() => _highlightBorder = !_highlightBorder), // [NEW]
+                    icon: const Icon(Icons.auto_awesome), // [NEW]
+                    label: Text(_highlightBorder ? '關閉高亮' : '邊框變亮綠'), // [NEW]
                   ),
                 ],
               ),
@@ -194,7 +239,7 @@ Widget _buildRive() {
     child: RiveAnimation.asset(
       widget.assetPath,
       artboard: widget.artboardName.isEmpty ? null : widget.artboardName,
-      stateMachines: widget.stateMachineName.isEmpty ? const [] : [widget.stateMachineName],
+      stateMachines: widget.dogStateMachineName.isEmpty ? const [] : [widget.dogStateMachineName],
       fit: BoxFit.cover,        // 關鍵：全螢幕填滿（可能裁切）
       alignment: Alignment.center,
       onInit: _onRiveInit,
@@ -205,7 +250,7 @@ Widget _buildRive() {
   @override
   void dispose() {
     // 不需要特別處理 Rive 資源；清空參考即可
-    _controller = null;
+    _dogController = null;
     _artboard = null;
     super.dispose();
   }
