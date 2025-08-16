@@ -5,38 +5,59 @@ import '../../../constants/assets.dart';
 import '../../../constants/languages.dart';
 
 
-/// 讀取 Rive 並提供 3 個動作控制：眨眼 / 跳 / 跑
+/// 同一個 .riv 同時顯示兩個 artboard：
+/// - 背景：Dog（DogSM）
+/// - 前景：Pizza（PizzaSM）
+/// 各自擁有獨立的 Input：blink(Trigger) / jump(Trigger) / run(Bool)
 class DogControlScreen extends StatefulWidget {
   const DogControlScreen({
     super.key,
-    this.assetPath = RiveAssets.rive_game_1,
-    this.artboardName = 'Dog',
-    this.dogStateMachineName = 'DogSM',
-    this.pizzaStateMachineName = 'PizzaSM',
-    this.inputBlink = 'blink',
-    this.inputJump = 'game1_dog_jump',
-    this.inputRun = 'run',
+    this.assetPath = RiveAssets.rive_game_1, // 你的 .riv 檔路徑（同檔包含 Dog / Pizza 兩個 artboard）
   });
 
   final String assetPath;
-  final String artboardName;
-  final String dogStateMachineName;
-  final String pizzaStateMachineName;
-
-  /// State Machine Inputs 名稱（需與 Rive 檔一致）
-  final String inputBlink; // Trigger
-  final String inputJump;  // Trigger
-  final String inputRun;   // Boolean
 
   @override
   State<DogControlScreen> createState() => _DogControlScreenState();
 }
 
 class _DogControlScreenState extends State<DogControlScreen> {
-  Artboard? _artboard;
-  StateMachineController? _dogController,_pizzaController;
+  // ===== 依你的 .riv 實際命名在此調整 =====
+  static const String _dogArtboardName = 'Dog';
+  static const String _dogStateMachine = 'DogSM';
+  static const String _dogBlink = 'blink';
+  static const String _dogJump  = 'game1_dog_jump';
+  static const String _dogRun   = 'run';
 
-  SMITrigger? _jump;
+  static const String _pizzaArtboardName = 'Pizza';
+  static const String _pizzaStateMachine = 'State Machine 1';
+  static const String _pizzaBlink = 'blink';
+  static const String _pizzaJump  = 'jump';
+  static const String _pizzaRun   = 'run';
+  // =====================================
+
+  // 背景 Dog
+  Artboard? _dogArt;
+  StateMachineController? _dogCtrl;
+  SMITrigger? _dogBlinkTrig;
+  SMITrigger? _dogJumpTrig;
+  SMIBool? _dogRunBool;
+
+  // 前景 Pizza
+  Artboard? _pizzaArt;
+  StateMachineController? _pizzaCtrl;
+  SMITrigger? _pizzaBlinkTrig;
+  SMITrigger? _pizzaJumpTrig;
+  SMIBool? _pizzaRunBool;
+
+  bool get _dogReady => _dogArt != null && _dogCtrl != null;
+  bool get _pizzaReady => _pizzaArt != null && _pizzaCtrl != null;
+
+  // ===== 可調參數 =====
+  // Artboard? _artboard;
+  // StateMachineController? _dogController;
+
+  // SMITrigger? _jump;
   
   // === 要疊在前景的照片清單 ===
   final List<String> _photos = const [
@@ -56,7 +77,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
   // 發光框相對於照片的縮放比例：1.0 = 跟照片一樣大；越小越縮
   double _glowBoxFactor_height = 0.3;
   double _glowBoxFactor_width = 0.75;
-  double _glowBoxFactor = 1;
+  double _glowBoxFactor = 0.3;
 
   // （可調）邊框與光暈強度
   double _borderWidth = 25.0;
@@ -71,47 +92,105 @@ class _DogControlScreenState extends State<DogControlScreen> {
     });
   }
 
-  void _onRiveInit(Artboard artboard) {
-    try {
-      
-      if (widget.dogStateMachineName.isEmpty ||  widget.pizzaStateMachineName.isEmpty) return;
-      final dogC = StateMachineController.fromArtboard(artboard, widget.dogStateMachineName);
-      //final pizzaC = StateMachineController.fromArtboard(artboard, widget.pizzaStateMachineName);
-      if ( dogC== null) return;
-      artboard.addController(dogC);
-      //artboard.addController(pizzaC);
-      _dogController = dogC;
-      //_pizzaController = pizzaC;
-
-      // 依你的 Rive input 名稱取值（示例：blink/click/run）
-      // 如果名稱不同，請改成你的 input 名稱
-      //     // 取得 Inputs（名稱需與 Rive 編輯器一致）
-      _jump  = dogC.findInput<bool>(widget.inputJump) as SMITrigger?;
-
-      if (!mounted) return;
-      setState(() {});
-    } catch (e) {
-      if (!mounted) return;
-      _showError('Rive 初始化失敗：$e');
-    }
-    
- 
-  }
-
-  bool get _isReady => _artboard != null && _dogController != null;
-
   @override
   void initState() {
     super.initState();
+    _loadBoth();
   }
 
-  void _showError(String msg) {
+  Future<void> _loadBoth() async {
+    // 清空舊狀態
+    setState(() {
+      _dogArt = null; _dogCtrl = null; _dogBlinkTrig = null; _dogJumpTrig = null; _dogRunBool = null;
+      _pizzaArt = null; _pizzaCtrl = null; _pizzaBlinkTrig = null; _pizzaJumpTrig = null; _pizzaRunBool = null;
+    });
+
+    try {
+      // 同一份 bytes，分別取出兩個 artboard
+      final data = await rootBundle.load(widget.assetPath);
+      final file = RiveFile.import(data);
+
+      // --- Dog（背景） ---
+      final dogArt = file.artboardByName(_dogArtboardName) ?? file.mainArtboard;
+      final dogCtrl = StateMachineController.fromArtboard(dogArt, _dogStateMachine);
+      if (dogCtrl == null) {
+        if (!mounted) return;
+        _showSnack('找不到 Dog 的 StateMachine：$_dogStateMachine');
+      } else {
+        dogArt.addController(dogCtrl);
+        _dogBlinkTrig = dogCtrl.findInput<bool>(_dogBlink) as SMITrigger?;
+        _dogJumpTrig  = dogCtrl.findInput<bool>(_dogJump)  as SMITrigger?;
+        _dogRunBool   = dogCtrl.findInput<bool>(_dogRun)   as SMIBool?;
+      }
+
+      // --- Pizza（前景） ---
+      final pizzaArt = file.artboardByName(_pizzaArtboardName) ?? file.mainArtboard;
+      final pizzaCtrl = StateMachineController.fromArtboard(pizzaArt, _pizzaStateMachine);
+      if (pizzaCtrl == null) {
+        if (!mounted) return;
+        _showSnack('找不到 Pizza 的 StateMachine：$_pizzaStateMachine');
+      } else {
+        pizzaArt.addController(pizzaCtrl);
+        _pizzaBlinkTrig = pizzaCtrl.findInput<bool>(_pizzaBlink) as SMITrigger?;
+        _pizzaJumpTrig  = pizzaCtrl.findInput<bool>(_pizzaJump)  as SMITrigger?;
+        _pizzaRunBool   = pizzaCtrl.findInput<bool>(_pizzaRun)   as SMIBool?;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _dogArt = dogArt;   _dogCtrl = dogCtrl;
+        _pizzaArt = pizzaArt; _pizzaCtrl = pizzaCtrl;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      _showSnack('載入 Rive 失敗：$e');
+    }
+  }
+
+  void _showSnack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  void _onJump() {
-    if (_jump == null) return _showError('找不到 Trigger：${widget.inputJump}');
-    _jump!.fire();
+   // ---- Dog controls ----
+  void _dogBlinkFire() {
+    if (_dogBlinkTrig == null) {
+      _showSnack('Dog: 找不到 Trigger：$_dogBlink');
+    } else {
+      _dogBlinkTrig!.fire();
+    }
+  }
+  void _dogJumpFire() {
+    if (_dogJumpTrig == null) {
+      _showSnack('Dog: 找不到 Trigger：$_dogJump');
+    } else {
+      _dogJumpTrig!.fire();
+    }
+  }
+  void _dogRunToggle() {
+    if (_dogRunBool == null) return _showSnack('Dog: 找不到 Bool：$_dogRun');
+    _dogRunBool!.value = !_dogRunBool!.value;
+    setState(() {});
+  }
+
+  // ---- Pizza controls ----
+  void _pizzaBlinkFire() {
+    if (_pizzaBlinkTrig == null) {
+      _showSnack('Pizza: 找不到 Trigger：$_pizzaBlink');
+    } else {
+      _pizzaBlinkTrig!.fire();
+    }
+  }
+  void _pizzaJumpFire() {
+    if (_pizzaJumpTrig == null) {
+      _showSnack('Pizza: 找不到 Trigger：$_pizzaJumpTrig');
+    } else {
+      _pizzaJumpTrig!.fire();
+    }
+  }
+  void _pizzaRunToggle() {
+    if (_pizzaRunBool == null) return _showSnack('Pizza: 找不到 Bool：$_pizzaRun');
+    _pizzaRunBool!.value = !_pizzaRunBool!.value;
+    setState(() {});
   }
 
   @override
@@ -137,7 +216,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
               fit: StackFit.expand,
               children: [
                 // ===== 底層：Rive 畫面 =====
-                _buildRive(),
+                _buildOverlay(),
 
                 // ===== 前景：可切換的照片 =====
                 Align(
@@ -208,7 +287,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
                 runSpacing: 12,
                 children: [
                   ElevatedButton(
-                    onPressed: () => _onJump(),
+                    onPressed: () => _dogJumpFire(),
                     child: const Text('跳躍'),
                   ),
                   // 這顆按鈕：切換前景照片
@@ -233,25 +312,101 @@ class _DogControlScreenState extends State<DogControlScreen> {
     );
   }
 
-Widget _buildRive() {
-  // 直接填滿整個可用空間
-  return SizedBox.expand(
-    child: RiveAnimation.asset(
-      widget.assetPath,
-      artboard: widget.artboardName.isEmpty ? null : widget.artboardName,
-      stateMachines: widget.dogStateMachineName.isEmpty ? const [] : [widget.dogStateMachineName],
-      fit: BoxFit.cover,        // 關鍵：全螢幕填滿（可能裁切）
-      alignment: Alignment.center,
-      onInit: _onRiveInit,
-    ),
-  );
-}
+Widget _buildOverlay() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // 背景：Dog
+        _dogReady
+            ? Rive(artboard: _dogArt!, fit: BoxFit.cover) // 或改 BoxFit.cover 讓背景鋪滿
+            : const Center(child: CircularProgressIndicator()),
+        // 前景：Pizza（必要時可用 Transform 做位移/縮放）
+        _pizzaReady
+            ? Rive(artboard: _pizzaArt!, fit: BoxFit.cover)
+            : const SizedBox.shrink(),
+
+        // 左上角標籤
+        // Positioned(
+        //   left: 8, top: 8,
+        //   child: Container(
+        //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        //     decoration: BoxDecoration(
+        //       color: Colors.black54, borderRadius: BorderRadius.circular(8),
+        //     ),
+        //     child: const Text('Dog(後) + Pizza(前)', style: TextStyle(color: Colors.white)),
+        //   ),
+        // ),
+
+        // // 底部控制列：第一排 Dog、第二排 Pizza
+        // Align(
+        //   alignment: Alignment.bottomCenter,
+        //   child: Container(
+        //     color: Colors.black54,
+        //     padding: const EdgeInsets.fromLTRB(12, 8, 12, 18),
+        //     child: SafeArea(
+        //       top: false,
+        //       child: Column(
+        //         mainAxisSize: MainAxisSize.min,
+        //         children: [
+        //           Row(
+        //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        //             children: _dogButtons(),
+        //           ),
+        //           const SizedBox(height: 8),
+        //           Row(
+        //             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        //             children: _pizzaButtons(),
+        //           ),
+        //         ],
+        //       ),
+        //     ),
+        //   ),
+        // ),
+      ],
+    );
+  }
+
+  // List<Widget> _dogButtons() => [
+  //       FilledButton.icon(
+  //         onPressed: _dogReady ? _dogBlinkFire : null,
+  //         icon: const Icon(Icons.visibility),
+  //         label: const Text('眨眼'),
+  //       ),
+  //       FilledButton.icon(
+  //         onPressed: _dogReady ? _dogJumpFire : null,
+  //         icon: const Icon(Icons.arrow_upward),
+  //         label: const Text('跳'),
+  //       ),
+  //       FilledButton.icon(
+  //         onPressed: _dogReady ? _dogRunToggle : null,
+  //         icon: const Icon(Icons.directions_run),
+  //         label: Text(_dogRunBool?.value == true ? '停止跑' : '開始跑'),
+  //       ),
+  //     ];
+
+  // List<Widget> _pizzaButtons() => [
+  //       FilledButton.icon(
+  //         onPressed: _pizzaReady ? _pizzaBlinkFire : null,
+  //         icon: const Icon(Icons.visibility),
+  //         label: const Text('眨眼'),
+  //       ),
+  //       FilledButton.icon(
+  //         onPressed: _pizzaReady ? _pizzaJumpFire : null,
+  //         icon: const Icon(Icons.arrow_upward),
+  //         label: const Text('跳'),
+  //       ),
+  //       FilledButton.icon(
+  //         onPressed: _pizzaReady ? _pizzaRunToggle : null,
+  //         icon: const Icon(Icons.local_pizza),
+  //         label: Text(_pizzaRunBool?.value == true ? '停止跑' : '開始跑'),
+  //       ),
+  //     ];
 
   @override
   void dispose() {
     // 不需要特別處理 Rive 資源；清空參考即可
-    _dogController = null;
-    _artboard = null;
+    _dogCtrl = null; _dogArt = null;
+    _pizzaCtrl = null; _pizzaArt = null;
     super.dispose();
   }
 }
