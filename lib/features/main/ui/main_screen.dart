@@ -31,7 +31,9 @@ class MainScreen extends ConsumerStatefulWidget {
 
 class _MainScreenState extends ConsumerState<MainScreen> {
   //late PersistentTabController _controller;
-  var _controller = PersistentTabController(initialIndex: 0);
+  //var _controller = PersistentTabController(initialIndex: 0);
+  late final PersistentTabController _controller;
+
   static const int _riveTabIndex = 3; // Rive tab 的位置 (依你的 items 調整)
   int _riveRebuildTick = 0;           // 每次選到 Rive tab 就遞增，用於強制重建
  
@@ -48,7 +50,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = PersistentTabController();
+    //_controller = PersistentTabController();
+    _controller = PersistentTabController(initialIndex: 0);
   }
 
   @override

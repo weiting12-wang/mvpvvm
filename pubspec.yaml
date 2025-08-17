@@ -104,6 +104,8 @@ flutter:
     - assets/animations/
     - assets/google_fonts/
     - assets/images/
+    - assets/images/game/game_welcome_bg.png
+    - assets/images/game/game_map.png
     - assets/images/game1_words/L001.png
     - assets/images/game1_words/L002.png
     - assets/images/game1_words/L003.png
