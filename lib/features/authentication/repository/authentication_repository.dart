@@ -170,7 +170,7 @@ class AuthenticationRepository {
       throw Exception(Languages.unexpectedErrorOccurred);
     }
   }
-// 🆕 新增 EC2 驗證方法
+// 🆕 新增 EC2 驗證方法 register 使用
   Future<Map<String, dynamic>> verifyWithEC2(String supabaseToken) async {
     try {
       final response = await http.post(

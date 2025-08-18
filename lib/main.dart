@@ -16,6 +16,7 @@ import 'features/common/ui/providers/app_theme_mode_provider.dart';
 import 'features/common/ui/widgets/offline_container.dart';
 import 'routing/router.dart';
 import 'utils/provider_observer.dart';
+import 'utils/device_info_service.dart';
 
 Future<void> initPlatformState() async {
   try {
@@ -32,7 +33,8 @@ Future<void> initPlatformState() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  /// 🆕 Device Info - 最早初始化
+  await _initializeDeviceInfo();
   /// Firebase
   // await Firebase.initializeApp(
   //     // options: DefaultFirebaseOptions.currentPlatform,
@@ -143,5 +145,28 @@ class MainApp extends ConsumerWidget {
         return OfflineContainer(child: child);
       },
     );
+  }
+}
+
+// 🆕 新增這個函數 (放在檔案最後，MainApp class 之後)
+Future<void> _initializeDeviceInfo() async {
+  try {
+    debugPrint('${Constants.tag} Initializing device info...');
+    final deviceService = DeviceInfoService.instance;
+    await deviceService.collectAndStoreDeviceInfo();
+    
+    // 📊 Log 設備資訊 (僅 Debug 模式)
+    if (kDebugMode) {
+      final deviceInfo = deviceService.cachedDeviceInfo;
+      debugPrint('${Constants.tag} ✅ Device Info Collected:');
+      debugPrint('${Constants.tag} - UUID: ${deviceInfo?['device_uuid']}');
+      debugPrint('${Constants.tag} - Model: ${deviceInfo?['device_model']}');
+      debugPrint('${Constants.tag} - Platform: ${deviceInfo?['platform']}');
+      debugPrint('${Constants.tag} - OS Version: ${deviceInfo?['os_version']}');
+      debugPrint('${Constants.tag} - App Version: ${deviceInfo?['app_version']}');
+    }
+  } catch (e) {
+    debugPrint('${Constants.tag} ❌ Failed to initialize device info: $e');
+    // 不要讓設備資訊收集失敗影響 App 啟動
   }
 }
