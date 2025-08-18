@@ -100,9 +100,7 @@ class Languages {
 
   // Rive Game
   static String riveGameTitle = 'enlightenary_game'.tr();
-  static String riveGame1 = 'game1_StateMachine'.tr();
-  static String riveGame2 = 'game2_SimpleAnimation'.tr();
-  static String riveGame3 = 'game3_Artboard_SM'.tr();
+  static String riveGame1 = 'game1'.tr();
   static String gameStart = 'gameStart'.tr();
 
 }
