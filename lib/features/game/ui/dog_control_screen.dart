@@ -3,7 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:rive/rive.dart';
 import '../../../constants/assets.dart';
 import '../../../constants/languages.dart';
-
+// [REC] 新增：錄音、HTTP、暫存路徑
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http_parser/http_parser.dart';
 
 /// 同一個 .riv 同時顯示兩個 artboard：
 /// - 背景：Dog（DogSM）
@@ -22,6 +27,15 @@ class DogControlScreen extends StatefulWidget {
 }
 
 class _DogControlScreenState extends State<DogControlScreen> {
+
+  // [REC] API 端點（請換掉）
+  static const String _audioApiEndpoint = 'https://example.com/api/upload-audio';
+
+  // [REC] 錄音器與狀態
+  final AudioRecorder _recorder = AudioRecorder();
+  bool _isRecording = false;
+  String? _lastResponseMessage;
+
   // ===== 依你的 .riv 實際命名在此調整 =====
   static const String _dogArtboardName = 'Dog';
   static const String _dogStateMachine = 'DogSM';
@@ -96,6 +110,85 @@ class _DogControlScreenState extends State<DogControlScreen> {
   void initState() {
     super.initState();
     _loadBoth();
+  }
+
+  // [REC] 主流程：錄 10 秒 -> 停 -> 上傳 -> 顯示回應
+  Future<void> _record10sAndUpload() async {
+    if (_isRecording) return;
+    try {
+      // v6：還是用 hasPermission()
+      final hasPermission = await _recorder.hasPermission();
+      if (!hasPermission) {
+        _showSnack('未取得麥克風權限');
+        return;
+      }
+
+      setState(() => _isRecording = true);
+
+      final tempDir = await getTemporaryDirectory();
+      final filePath =
+          '${tempDir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+      // ✅ v6 正確啟動：start(RecordConfig, path: ...)
+      await _recorder.start(
+        RecordConfig(
+          encoder: AudioEncoder.aacLc, // m4a
+          bitRate: 128000,
+          sampleRate: 44100,
+        ),
+        path: filePath,
+      );
+
+      await Future.delayed(const Duration(seconds: 10));
+
+      // ✅ v6：stop() 仍回傳實際檔案路徑（或 null）
+      final path = await _recorder.stop();
+      setState(() => _isRecording = false);
+
+      if (path == null) {
+        _showSnack('未取得錄音檔');
+        return;
+      }
+
+      final file = File(path);
+      if (!await file.exists() || await file.length() == 0) {
+        _showSnack('錄音檔無效');
+        return;
+      }
+
+      // 上傳 multipart
+      final req = http.MultipartRequest(
+        'POST',
+        Uri.parse(_audioApiEndpoint),
+      )..files.add(
+          await http.MultipartFile.fromPath(
+            'audio',
+            path,
+            contentType: MediaType('audio', 'm4a'),
+          ),
+        );
+
+      final streamed = await req.send();
+      final resp = await http.Response.fromStream(streamed);
+
+      if (resp.statusCode >= 200 && resp.statusCode < 300) {
+        final msg = resp.body.isEmpty ? '上傳成功（無內容）' : resp.body;
+        setState(() => _lastResponseMessage = msg);
+        _showSnack('伺服器回應：$msg');
+
+        // ✅ 上傳成功後刪除暫存檔
+        try {
+          await File(path).delete();
+        } catch (e) {
+          debugPrint('刪除暫存檔失敗: $e');
+        }
+      } else {
+        _showSnack('上傳失敗：${resp.statusCode} ${resp.reasonPhrase}');
+      }
+    } catch (e) {
+      setState(() => _isRecording = false);
+      _showSnack('錄音/上傳發生錯誤：$e');
+    }
   }
 
   Future<void> _loadBoth() async {
@@ -303,6 +396,12 @@ class _DogControlScreenState extends State<DogControlScreen> {
                     icon: const Icon(Icons.auto_awesome), // [NEW]
                     label: Text(_highlightBorder ? '關閉高亮' : '邊框變亮綠'), // [NEW]
                   ),
+                  // [REC] 錄音 10 秒並送出
+                  FilledButton.icon(
+                    onPressed: _isRecording ? null : _record10sAndUpload,
+                    icon: Icon(_isRecording ? Icons.mic : Icons.mic_none),
+                    label: Text(_isRecording ? '錄音中…' : '錄音 10 秒並送出'),
+                  ),
                 ],
               ),
             ),
@@ -404,6 +503,8 @@ Widget _buildOverlay() {
 
   @override
   void dispose() {
+    // [REC] 停掉錄音器
+    try { _recorder.dispose(); } catch (_) {}
     // 不需要特別處理 Rive 資源；清空參考即可
     _dogCtrl = null; _dogArt = null;
     _pizzaCtrl = null; _pizzaArt = null;
