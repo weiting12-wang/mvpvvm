@@ -322,7 +322,7 @@ SPEC CHECKSUMS:
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   purchases_flutter: 7f2f923fde8ab75125c3e85522a43f6ed1253580
   PurchasesHybridCommon: f1650b33e9a1dd04d5e8a40dfe757f39e63f935c
-  record_ios: 840d21cce013c5a3b2168b74a54ebdb4136359e2
+  record_ios: f75fa1d57f840012775c0e93a38a7f3ceea1a374
   RevenueCat: 7e1d0768fb287c9983173c9b28e39ccbeeb828a9
   rive_common: daeaa675f575d0a2ce65a2c90d4838d75327047b
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
