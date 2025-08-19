@@ -304,14 +304,29 @@ Future<void> sendOtp(String email) async {
       AuthenticationState(
         authResponse: authResponse,
         isRegisterSuccessfully: !isExistAccount,
-        isSignInSuccessfully: true,
+        //isSignInSuccessfully: true,
       ),
     );
+    print('${Constants.tag} [AuthenticationViewModel.handleResult] 處理完成');
   }
 
 // 🆕 新增處理 Supabase Auth 成功後的 EC2 驗證
   Future<void> handleSupabaseAuthSuccess(Session session) async {
+    print('${Constants.tag} [handleSupabaseAuthSuccess] 🎯 開始處理');
+    
+    // ✅ 檢查當前狀態，如果已經是登入成功狀態，說明是註冊流程，直接跳過
+    if (state.value?.isSignInSuccessfully == true) {
+      print('${Constants.tag} [handleSupabaseAuthSuccess] 📝 已登入成功（註冊流程），跳過 EC2 處理');
+      return;
+    }
+    
+    if (state.value?.isEC2Verifying == true) {
+      print('${Constants.tag} [handleSupabaseAuthSuccess] ⚠️ 已在驗證中，跳過');
+      return;
+    }
+    
     try {
+      print('${Constants.tag} [handleSupabaseAuthSuccess] 🔄 設置 isEC2Verifying = true');
       // 設定 EC2 驗證中狀態
       state = AsyncData(
         state.value?.copyWith(
@@ -322,7 +337,7 @@ Future<void> sendOtp(String email) async {
           authResponse: AuthResponse(session: session, user: session.user),
         ),
       );
-
+      print('${Constants.tag} [handleSupabaseAuthSuccess] 📧 更新 Profile email');
       // 更新基本 profile
       ref.read(profileViewModelProvider.notifier)
          .updateProfile(email: session.user.email ?? '');
@@ -330,7 +345,7 @@ Future<void> sendOtp(String email) async {
       // 進行 EC2 驗證
       final authRepo = ref.read(authenticationRepositoryProvider);
       final ec2Result = await authRepo.verifyWithEC2(session.accessToken);
-
+      print('${Constants.tag} [handleSupabaseAuthSuccess] ✅ EC2 驗證完成: $ec2Result');
       // 處理 EC2 結果
       final ec2Status = ec2Result['status'] as String;
       final ec2ProfileComplete = ec2Result['profile_complete'] as bool? ?? false;

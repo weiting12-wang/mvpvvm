@@ -93,12 +93,12 @@ final supabaseAuthListenerProvider = Provider<void>((ref) {
     debugPrint('[Supabase] Auth Event: $event, User: ${session?.user?.email}');
     
     switch (event) {
-      case AuthChangeEvent.signedIn:
-        if (session != null) {
-          debugPrint('[Supabase] Magic Link 登入成功：${session.user?.email}');
-          router.go('/main');
-        }
-        break;
+      //case AuthChangeEvent.signedIn:
+      //  if (session != null) {
+      //    debugPrint('[Supabase] Magic Link 登入成功：${session.user?.email}');
+      //    router.go('/main');
+      //  }
+      //  break;
         
       case AuthChangeEvent.passwordRecovery:
         if (session != null) {

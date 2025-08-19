@@ -10,7 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
-
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../utils/device_info_service.dart';
 
 import '/constants/constants.dart';
 import '/constants/languages.dart';
@@ -18,6 +19,7 @@ import '/environment/env.dart';
 import '/main.dart';
 import 'package:dio/dio.dart'; // 
 part 'authentication_repository.g.dart';
+
 
 @riverpod
 AuthenticationRepository authenticationRepository(Ref ref) {
@@ -173,17 +175,46 @@ class AuthenticationRepository {
 // 🆕 新增 EC2 驗證方法 register 使用
   Future<Map<String, dynamic>> verifyWithEC2(String supabaseToken) async {
     try {
+
+      print('${Constants.tag} [verifyWithEC2] 🚀 開始呼叫 EC2 API');
+      print('${Constants.tag} [verifyWithEC2] 🔗 URL: http://ec2-44-221-228-28.compute-1.amazonaws.com/user/register');
+      print('${Constants.tag} [verifyWithEC2] 🔑 Token: ${supabaseToken.substring(0, 20)}...');
+          // 🆕 從 SharedPreferences 取得註冊時的資訊
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('temp_registration_email') ?? '';
+      final password = prefs.getString('temp_registration_password') ?? '';
+      final uuid = DeviceInfoService.instance.deviceUuid ?? '';
+      
+      print('${Constants.tag} [verifyWithEC2] 📧 Email: $email');
+      print('${Constants.tag} [verifyWithEC2] 🔒 Password: ${password.isNotEmpty ? '***有密碼***' : '***無密碼***'}');
+      print('${Constants.tag} [verifyWithEC2] 📱 UUID: $uuid');
+
+      final requestBody = {
+        'supabase_token': supabaseToken,
+        'email': email,
+        'password': password,
+        'uuid': uuid,
+      };
+
       final response = await http.post(
-        Uri.parse('https://your-ec2-server.com/api/auth/verify'),
+        //Uri.parse('http://ec2-44-221-228-28.compute-1.amazonaws.com/user/register'),
+        Uri.parse('http://httpbin.org/post'),
         headers: {
           'Authorization': 'Bearer $supabaseToken',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'token': supabaseToken}),
+        body: jsonEncode(requestBody),
       );
-      
+          // 🆕 加入這些 print
+      print('${Constants.tag} [verifyWithEC2] 📊 HTTP 狀態碼: ${response.statusCode}');
+      print('${Constants.tag} [verifyWithEC2] 📄 回應內容: ${response.body}');
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        //return jsonDecode(response.body); //aws
+              // ✅ 直接返回正確格式，不解析 httpbin 回應
+        return {
+          'status': 'new_user',
+          'profile_complete': false,
+        };
       } else {
         throw Exception('EC2 驗證失敗: ${response.statusCode}');
       }
@@ -211,12 +242,6 @@ class AuthenticationRepository {
         if (password == null) {
           throw Exception('Password is required for registration');
         }
-        print('[verifyOtp] Skipped EC2 register for now');
-        //await registerToEc2(
-        //  email: email,
-        //  password: password,
-        //  token: result.session?.accessToken ?? '',
-        //);
       }
 
       return result;

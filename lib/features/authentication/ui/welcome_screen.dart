@@ -22,6 +22,7 @@ import 'view_model/authentication_view_model.dart';
 import 'widgets/horizontal_divider.dart';
 import 'widgets/sign_in_agreement.dart';
 import 'widgets/social_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -52,6 +53,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       debugPrint(
           '${Constants.tag} [WelcomeScreen.initState] Auth change: $event, session: $session');
       if (event == AuthChangeEvent.signedIn && session != null) {
+        print('${Constants.tag} [WelcomeScreen.Auth監聽器] 🚀 準備觸發 handleSupabaseAuthSuccess');
         // 🆕 觸發 EC2 驗證，而不是直接導航
         ref.read(authenticationViewModelProvider.notifier)
           .handleSupabaseAuthSuccess(session);
@@ -133,9 +135,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         }
 
         // 現有用戶的註冊成功導航
-        if (authState.isRegisterSuccessfully) {
-          context.pushReplacement(Routes.onboarding);
-        } 
+        ////if (authState.isRegisterSuccessfully) {
+        ////  context.pushReplacement(Routes.onboarding);
+        ////} 
         // 已註冊用戶的備用導航（防護機制）
         else if (authState.isSignInSuccessfully && !authState.isEC2Verifying) {
           if (authState.ec2Status == null) {  // 如果後端沒返回狀態
@@ -188,7 +190,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               PrimaryButton(
                 isEnable: _isEmailValid && _isPasswordValid,
                 text: 'continue'.tr(),
-                onPressed: () {
+                onPressed: () async { // 👈 加上 async
+                    // 🆕 存儲註冊資訊給後續 EC2 使用
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString('temp_registration_email', _emailController.text.trim());
+                  await prefs.setString('temp_registration_password', _passwordController.text);
                   ref
                       .read(authenticationViewModelProvider.notifier)
                       .signInWithMagicLink(_emailController.text);
