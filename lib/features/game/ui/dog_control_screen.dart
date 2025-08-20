@@ -41,6 +41,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
   static const String _dogStateMachine = 'DogSM';
   static const String _dogJump  = 'game1_dog_jump';
   static const String _dogWave = 'game1_dog_waving';
+  static const String _dogEncourage = 'game1_dog_encourage';
   
   static const String _pizzaArtboardName = 'Pizza';
   static const String _pizzaStateMachine = 'PizzaSM';
@@ -68,6 +69,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
   rive.StateMachineController? _dogCtrl;
   rive.SMITrigger? _dogJumpTrig;
   rive.SMITrigger? _dogWaveTrig;
+  rive.SMITrigger? _dogEncourageTrig;
   
   // 前景 Pizza
   rive.Artboard? _pizzaArt;
@@ -89,6 +91,10 @@ class _DogControlScreenState extends State<DogControlScreen> {
   // 錄音按鈕 Rive 控制
   rive.Artboard? _recordButtonArt;
   rive.StateMachineController? _recordButtonCtrl;
+  rive.SMITrigger? _recStartTrig;
+  rive.SMITrigger? _recStopTrig;
+  rive.SMIBool? _recCheckCorrect;    // trigger: recordStop
+
   bool _showRecordButton = false;
 
   bool get _dogReady => _dogArt != null && _dogCtrl != null;
@@ -142,9 +148,8 @@ class _DogControlScreenState extends State<DogControlScreen> {
     });
   }
 
-
   // [REC] 主流程：錄 10 秒 -> 停 -> 上傳 -> 顯示回應
-  Future<void> _record10sAndUpload() async {
+  Future<void> _record10sAndUploadWithAnim() async {
     if (_isRecording) return;
     try {
       // v6：還是用 hasPermission()
@@ -156,6 +161,11 @@ class _DogControlScreenState extends State<DogControlScreen> {
 
       setState(() => _isRecording = true);
 
+      // 1) Rive：啟動動畫
+      _recStartTrig?.fire();
+      // Dog 鼓勵動畫連續 3 次（非阻塞：不 await）
+      _dogEncourageTrig?.fire();
+      
       final tempDir = await getTemporaryDirectory();
       final filePath =
           '${tempDir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
@@ -171,6 +181,9 @@ class _DogControlScreenState extends State<DogControlScreen> {
       );
 
       await Future.delayed(const Duration(seconds: 10));
+
+      // 停止計時 & 播「結束」動畫
+      _recStopTrig?.fire();
 
       // ✅ v6：stop() 仍回傳實際檔案路徑（或 null）
       final path = await _recorder.stop();
@@ -198,6 +211,9 @@ class _DogControlScreenState extends State<DogControlScreen> {
             contentType: MediaType('audio', 'm4a'),
           ),
         );
+
+      // 當response 成功時，播放「正確」動畫
+      _showCorrectAnim();
 
       final streamed = await req.send();
       final resp = await http.Response.fromStream(streamed);
@@ -244,6 +260,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
         dogArt.addController(dogCtrl);
         _dogJumpTrig  = dogCtrl.findInput<bool>(_dogJump)  as rive.SMITrigger?;
         _dogWaveTrig = dogCtrl.findInput<bool>(_dogWave) as rive.SMITrigger?;
+        _dogEncourageTrig = dogCtrl.findInput<bool>(_dogEncourage) as rive.SMITrigger?;
       }
 
       // --- Pizza（前景） ---
@@ -306,18 +323,37 @@ class _DogControlScreenState extends State<DogControlScreen> {
       final recArt = file.artboardByName(_recButtonArtboardName);
       final recCtrl = rive.StateMachineController.fromArtboard(recArt!, _recButtonStateMachine);
 
+      rive.SMITrigger? startTrig;
+      rive.SMITrigger? stopTrig;
+      rive.SMIBool?    checkCorrectBool;
+
       if (recCtrl != null) {
         recArt.addController(recCtrl);
+        startTrig = recCtrl.findInput<bool>('recordStart') as rive.SMITrigger?;
+        stopTrig    = recCtrl.findInput<bool>('recordStop')  as rive.SMITrigger?;
+        checkCorrectBool = recCtrl.findInput<bool>('checkCorrect') as rive.SMIBool?;
+
       }
 
       if (!mounted) return;
       setState(() {
         _recordButtonArt = recArt;
         _recordButtonCtrl = recCtrl;
+        _recStartTrig = startTrig;   // 👈 新增 trigger 變數
+        _recStopTrig  = stopTrig;
+        _recCheckCorrect   = checkCorrectBool;
       });
     } catch (e) {
       _showSnack('載入錄音按鈕失敗：$e');
     }
+  }
+
+  // [NEW] 播放「正確」動畫：設 true -> 等待 -> 還原 false
+  void _showCorrectAnim({Duration hold = const Duration(milliseconds: 1200)}) {
+    _recCheckCorrect?.value = true;
+    Future.delayed(hold, () {
+      _recCheckCorrect?.value = false;
+    });
   }
 
   Future<void> _loadPizzaButton() async {
@@ -511,19 +547,45 @@ Widget _buildOverlay() {
         : const SizedBox.shrink(),
        // [REC] 錄音按鈕（疊在最上層）
       if (_recordButtonArt != null)
-        Transform.translate(
-            offset: Offset(0, MediaQuery.of(context).size.height * 0.35), // 相對螢幕下移
-            child: Transform.scale(
-              scale: 0.25, // 👈 縮小為原來的 80%（1.0 = 原始大小）
-              alignment: Alignment.center,
-              child: rive.Rive(
-                artboard: _recordButtonArt!,
-                fit: BoxFit.contain,
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 0), // 👈 調整位置
+            child: GestureDetector(
+              onTap: () {
+                if (!_isRecording) {
+                  _record10sAndUploadWithAnim();
+                }
+              },
+              child: SizedBox(
+                width: 90,
+                height: 90,
+                child: rive.Rive(
+                  artboard: _recordButtonArt!,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
-          )
+          ),
+        )
       else
-        const SizedBox.shrink(),  // 若錄音按鈕未載入，則不顯示 
+        const SizedBox.shrink(), // 若錄音按鈕未載入，則不顯示
+      // [REC] 錄音按鈕（縮小版，疊
+
+      // if (_recordButtonArt != null)
+      //   Transform.translate(
+      //       offset: Offset(0, MediaQuery.of(context).size.height * 0.35), // 相對螢幕下移
+      //       child: Transform.scale(
+      //         scale: 0.25, // 👈 縮小為原來的 80%（1.0 = 原始大小）
+      //         alignment: Alignment.center,
+      //         child: rive.Rive(
+      //           artboard: _recordButtonArt!,
+      //           fit: BoxFit.contain,
+      //         ),
+      //       ),
+      //     )
+      // else
+      //   const SizedBox.shrink(),  // 若錄音按鈕未載入，則不顯示 
       // 下排按鈕：Pizza B1~B5
       if (_pizzaB1Art != null &&
           _pizzaB2Art != null &&
