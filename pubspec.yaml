@@ -72,7 +72,7 @@ dependencies:
   url_launcher: ^6.3.0
   uuid: ^4.4.0
   http: ^1.2.2
-  rive: ^0.12.4
+  rive: ^0.13.20
   video_player: ^2.9.0
   record: ^6.1.0
   device_info_plus: ^10.1.0  # 🆕 新增
@@ -108,13 +108,13 @@ flutter:
     - assets/images/
     - assets/images/game/game_welcome_bg.png
     - assets/images/game/game_map.png
-    - assets/images/game1_words/L001.png
-    - assets/images/game1_words/L002.png
-    - assets/images/game1_words/L003.png
-    - assets/images/game1_words/L004.png
+    - assets/images/L_card/Group 44.png
+    - assets/images/L_card/Group 45.png
+    - assets/images/L_card/Group 46.png
+    - assets/images/L_card/Group 47.png
     - assets/translations/
     - assets/rive/vehicles.riv
-    - assets/rive/dogchef.riv
+    - assets/rive/game1_dog_luca_iphone16.riv
     - assets/videos/intro.mov
 
   # To add assets to your application, add an assets section, like this:

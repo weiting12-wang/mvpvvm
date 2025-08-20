@@ -17,6 +17,15 @@ class Assets {
 //Rive assets
 class RiveAssets {
   static const rive_game_intro = 'assets/rive/vehicles.riv';
-  static const rive_game_1 = 'assets/rive/dogchef.riv';
+  static const rive_game_1 = 'assets/rive/game1_dog_luca.riv';
   
+}
+
+class WordCardAssets {
+  static const List<String> all_L_card = [
+    'assets/images/L_card/Group 44.png',
+    'assets/images/L_card/Group 45.png',
+    'assets/images/L_card/Group 46.png',
+    'assets/images/L_card/Group 47.png',
+  ];
 }
