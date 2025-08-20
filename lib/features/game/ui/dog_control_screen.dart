@@ -46,9 +46,21 @@ class _DogControlScreenState extends State<DogControlScreen> {
   static const String _pizzaStateMachine = 'PizzaSM';
   static const String _pizzaBlink = 'blink';
 
+  static const String _pizzab1ArtboardName = 'pizza_bt01';
+  static const String _pizzab1StateMachine = 'pizza_bt01SM';
+  static const String _pizzab2ArtboardName = 'pizza_bt02';
+  static const String _pizzab2StateMachine = 'pizza_bt02SM';
+  static const String _pizzab3ArtboardName = 'pizza_bt03';
+  static const String _pizzab3StateMachine = 'pizza_bt03SM';
+  static const String _pizzab4ArtboardName = 'pizza_bt04';
+  static const String _pizzab4StateMachine = 'pizza_bt04SM';
+  static const String _pizzab5ArtboardName = 'pizza_bt05';
+  static const String _pizzab5StateMachine = 'pizza_bt05SM';
+
+
   // === 錄音按鈕 artboard 與 controller ===
-static const String _recButtonArtboardName = 'RecordingIcon';
-static const String _recButtonStateMachine = 'State Machine 1';
+  static const String _recButtonArtboardName = 'RecordingIcon';
+  static const String _recButtonStateMachine = 'RecordSM';
   // =====================================
 
   // 背景 Dog
@@ -62,6 +74,18 @@ static const String _recButtonStateMachine = 'State Machine 1';
   rive.StateMachineController? _pizzaCtrl;
   rive.SMITrigger? _pizzaBlinkTrig;
   
+  // 前景 Pizza 配料的 artboard 與 controller
+  rive.Artboard? _pizzaB1Art;
+  rive.StateMachineController? _pizzaB1Ctrl;
+  rive.Artboard? _pizzaB2Art;
+  rive.StateMachineController? _pizzaB2Ctrl;
+  rive.Artboard? _pizzaB3Art;
+  rive.StateMachineController? _pizzaB3Ctrl;
+  rive.Artboard? _pizzaB4Art;
+  rive.StateMachineController? _pizzaB4Ctrl;
+  rive.Artboard? _pizzaB5Art;
+  rive.StateMachineController? _pizzaB5Ctrl;
+
   // 錄音按鈕 Rive 控制
   rive.Artboard? _recordButtonArt;
   rive.StateMachineController? _recordButtonCtrl;
@@ -78,7 +102,7 @@ static const String _recButtonStateMachine = 'State Machine 1';
 
    // 照片在畫面中的對齊（往上移一點：y = -0.5；置中改 Alignment.center）
   static const Alignment _photoAlignment = Alignment(0, -1);
-  double _photoScale = 1; // 照片縮放比例（初始為 1）
+  double _photoScale = 0.9; // 照片縮放比例（初始為 1）
   
   // 高亮綠色邊框狀態
   bool _highlightBorder = false;
@@ -112,6 +136,7 @@ static const String _recButtonStateMachine = 'State Machine 1';
         Future.delayed(const Duration(seconds: 2), () {
           _loadRecordButton(); // 👈 這裡載入錄音按鈕 artboard
           _showPhotos = true; // ✅ 錄音按鈕載入完才顯示照片
+          _loadPizzaButton();
         });
       });
     });
@@ -295,6 +320,43 @@ static const String _recButtonStateMachine = 'State Machine 1';
     }
   }
 
+  Future<void> _loadPizzaButton() async {
+    try {
+      final data = await rootBundle.load(widget.assetPath);
+      final file = rive.RiveFile.import(data);
+
+      // 載入 pizzaB1~B5
+      final b1 = file.artboardByName(_pizzab1ArtboardName);
+      final b2 = file.artboardByName(_pizzab2ArtboardName);
+      final b3 = file.artboardByName(_pizzab3ArtboardName);
+      final b4 = file.artboardByName(_pizzab4ArtboardName);
+      final b5 = file.artboardByName(_pizzab5ArtboardName);
+
+      final b1Ctrl = b1 != null ? rive.StateMachineController.fromArtboard(b1, _pizzab1StateMachine) : null;
+      final b2Ctrl = b2 != null ? rive.StateMachineController.fromArtboard(b2, _pizzab2StateMachine) : null;
+      final b3Ctrl = b3 != null ? rive.StateMachineController.fromArtboard(b3, _pizzab3StateMachine) : null;
+      final b4Ctrl = b4 != null ? rive.StateMachineController.fromArtboard(b4, _pizzab4StateMachine) : null;
+      final b5Ctrl = b5 != null ? rive.StateMachineController.fromArtboard(b5, _pizzab5StateMachine) : null;
+
+
+      if (b1 != null && b1Ctrl != null) b1.addController(b1Ctrl);
+      if (b2 != null && b2Ctrl != null) b2.addController(b2Ctrl);
+      if (b3 != null && b3Ctrl != null) b3.addController(b3Ctrl);
+      if (b4 != null && b4Ctrl != null) b4.addController(b4Ctrl);
+      if (b5 != null && b5Ctrl != null) b5.addController(b5Ctrl);
+
+      if (!mounted) return;
+      setState(() {
+        _pizzaB1Art = b1; _pizzaB1Ctrl = b1Ctrl;
+        _pizzaB2Art = b2; _pizzaB2Ctrl = b2Ctrl;
+        _pizzaB3Art = b3; _pizzaB3Ctrl = b3Ctrl;
+        _pizzaB4Art = b4; _pizzaB4Ctrl = b4Ctrl;
+        _pizzaB5Art = b5; _pizzaB5Ctrl = b5Ctrl;
+      });
+    } catch (e) {
+      _showSnack('載入Pizza按鈕失敗：$e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -436,9 +498,9 @@ Widget _buildOverlay() {
       // 前景：Pizza，下移 10% 高度
       _pizzaReady
         ? Transform.translate(
-            offset: Offset(0, MediaQuery.of(context).size.height * 0.25), // 相對螢幕下移
+            offset: Offset(0, MediaQuery.of(context).size.height * 0.15), // 相對螢幕下移
             child: Transform.scale(
-              scale: 0.9, // 👈 縮小為原來的 80%（1.0 = 原始大小）
+              scale: 0.65, // 👈 縮小為原來的 80%（1.0 = 原始大小）
               alignment: Alignment.center,
               child: rive.Rive(
                 artboard: _pizzaArt!,
@@ -449,24 +511,56 @@ Widget _buildOverlay() {
         : const SizedBox.shrink(),
        // [REC] 錄音按鈕（疊在最上層）
       if (_recordButtonArt != null)
-        Align(
-          alignment: Alignment.bottomCenter, // 👈 可以改為 bottomLeft、topRight 等
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 0), // 👈 下移距離，可調整
-            child: SizedBox(
-              width: 100,  // 👈 設定寬度
-              height: 100, // 👈 設定高度
+        Transform.translate(
+            offset: Offset(0, MediaQuery.of(context).size.height * 0.35), // 相對螢幕下移
+            child: Transform.scale(
+              scale: 0.25, // 👈 縮小為原來的 80%（1.0 = 原始大小）
+              alignment: Alignment.center,
               child: rive.Rive(
                 artboard: _recordButtonArt!,
                 fit: BoxFit.contain,
               ),
             ),
-          ),
-        )
+          )
       else
         const SizedBox.shrink(),  // 若錄音按鈕未載入，則不顯示 
-
+      // 下排按鈕：Pizza B1~B5
+      if (_pizzaB1Art != null &&
+          _pizzaB2Art != null &&
+          _pizzaB3Art != null &&
+          _pizzaB4Art != null &&
+          _pizzaB5Art != null)
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 80), // 上移，避免蓋到錄音按鈕
+            child: SizedBox(
+              height: 80,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildMiniRive(_pizzaB1Art!),
+                  _buildMiniRive(_pizzaB2Art!),
+                  _buildMiniRive(_pizzaB3Art!),
+                  _buildMiniRive(_pizzaB4Art!),
+                  _buildMiniRive(_pizzaB5Art!),
+                ],
+              ),
+            ),
+          ),
+        ),
     ],
+  );
+}
+
+Widget _buildMiniRive(rive.Artboard art) {
+  return SizedBox(
+    width: 60,
+    height: 60,
+    child: rive.Rive(
+      artboard: art,
+      fit: BoxFit.contain,
+    ),
   );
 }
 
