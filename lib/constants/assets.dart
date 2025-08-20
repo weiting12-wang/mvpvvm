@@ -27,5 +27,8 @@ class WordCardAssets {
     'assets/images/L_card/Group 45.png',
     'assets/images/L_card/Group 46.png',
     'assets/images/L_card/Group 47.png',
+    'assets/images/L_card/Group 48.png',
+    'assets/images/L_card/Group 49.png',
+    'assets/images/L_card/Group 50.png',
   ];
 }

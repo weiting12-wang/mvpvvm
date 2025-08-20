@@ -40,34 +40,41 @@ class _DogControlScreenState extends State<DogControlScreen> {
   static const String _dogArtboardName = 'Dog';
   static const String _dogStateMachine = 'DogSM';
   static const String _dogJump  = 'game1_dog_jump';
+  static const String _dogWave = 'game1_dog_waving';
   
   static const String _pizzaArtboardName = 'Pizza';
   static const String _pizzaStateMachine = 'PizzaSM';
   static const String _pizzaBlink = 'blink';
+
+  // === 錄音按鈕 artboard 與 controller ===
+static const String _recButtonArtboardName = 'RecordingIcon';
+static const String _recButtonStateMachine = 'State Machine 1';
   // =====================================
 
   // 背景 Dog
   rive.Artboard? _dogArt;
   rive.StateMachineController? _dogCtrl;
   rive.SMITrigger? _dogJumpTrig;
+  rive.SMITrigger? _dogWaveTrig;
   
   // 前景 Pizza
   rive.Artboard? _pizzaArt;
   rive.StateMachineController? _pizzaCtrl;
   rive.SMITrigger? _pizzaBlinkTrig;
   
+  // 錄音按鈕 Rive 控制
+  rive.Artboard? _recordButtonArt;
+  rive.StateMachineController? _recordButtonCtrl;
+  bool _showRecordButton = false;
+
   bool get _dogReady => _dogArt != null && _dogCtrl != null;
   bool get _pizzaReady => _pizzaArt != null && _pizzaCtrl != null;
+  bool get _recordButtonReady => _recordButtonArt != null && _recordButtonCtrl != null;
 
-  // ===== 可調參數 =====
-  // Artboard? _artboard;
-  // StateMachineController? _dogController;
-
-  // SMITrigger? _jump;
-  
   // === 要疊在前景的照片清單 ===
   final List<String> _photos = WordCardAssets.all_L_card;
   int _photoIndex = 0;
+  bool _showPhotos = false; // 預設不顯示
 
    // 照片在畫面中的對齊（往上移一點：y = -0.5；置中改 Alignment.center）
   static const Alignment _photoAlignment = Alignment(0, -1);
@@ -84,6 +91,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
   double _glowSpread = 0.5;
   double _cornerRadius = 20.0;
 
+  // ===== 控制按鈕 =====
   void _nextPhoto() {
     setState(() {
       _photoIndex = (_photoIndex + 1) % _photos.length;
@@ -94,8 +102,21 @@ class _DogControlScreenState extends State<DogControlScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBoth();
+
+    _loadDogAndPizza().then((_) {
+      // 延遲 5 秒再播放 wave
+      Future.delayed(const Duration(seconds: 1), () {
+        _dogWaveTrig?.fire();
+
+        // 播放完 wave 再顯示錄音按鈕（假設 wave 是 2 秒）
+        Future.delayed(const Duration(seconds: 2), () {
+          _loadRecordButton(); // 👈 這裡載入錄音按鈕 artboard
+          _showPhotos = true; // ✅ 錄音按鈕載入完才顯示照片
+        });
+      });
+    });
   }
+
 
   // [REC] 主流程：錄 10 秒 -> 停 -> 上傳 -> 顯示回應
   Future<void> _record10sAndUpload() async {
@@ -176,7 +197,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
     }
   }
 
-  Future<void> _loadBoth() async {
+  Future<void> _loadDogAndPizza() async {
     // 清空舊狀態
     setState(() {
       _dogArt = null; _dogCtrl = null; _dogJumpTrig = null;
@@ -197,6 +218,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
       } else {
         dogArt.addController(dogCtrl);
         _dogJumpTrig  = dogCtrl.findInput<bool>(_dogJump)  as rive.SMITrigger?;
+        _dogWaveTrig = dogCtrl.findInput<bool>(_dogWave) as rive.SMITrigger?;
       }
 
       // --- Pizza（前景） ---
@@ -234,6 +256,14 @@ class _DogControlScreenState extends State<DogControlScreen> {
     }
   }
   
+  void _dogWaveFire() {
+    if (_dogWaveTrig == null) {
+      _showSnack('Dog: 找不到 Trigger：$_dogWave');
+    } else {
+      _dogWaveTrig!.fire();
+    }
+  }
+
   // ---- Pizza controls ----
   void _pizzaBlinkFire() {
     if (_pizzaBlinkTrig == null) {
@@ -242,7 +272,29 @@ class _DogControlScreenState extends State<DogControlScreen> {
       _pizzaBlinkTrig!.fire();
     }
   }
-  
+
+  Future<void> _loadRecordButton() async {
+    try {
+      final data = await rootBundle.load(widget.assetPath);
+      final file = rive.RiveFile.import(data);
+
+      final recArt = file.artboardByName(_recButtonArtboardName);
+      final recCtrl = rive.StateMachineController.fromArtboard(recArt!, _recButtonStateMachine);
+
+      if (recCtrl != null) {
+        recArt.addController(recCtrl);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _recordButtonArt = recArt;
+        _recordButtonCtrl = recCtrl;
+      });
+    } catch (e) {
+      _showSnack('載入錄音按鈕失敗：$e');
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -270,56 +322,57 @@ class _DogControlScreenState extends State<DogControlScreen> {
                 _buildOverlay(),
 
                 // ===== 前景：可切換的照片 =====
-                Align(
-                  alignment: _photoAlignment,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    child: Transform.scale(
-                      key: ValueKey('photo_${_photos[_photoIndex]}_$_photoScale$_highlightBorder$_glowBoxFactor'),
-                      scale: _photoScale,
-                      alignment: Alignment.center,
-                      child: Stack(
+                if (_showPhotos)
+                  Align(
+                    alignment: _photoAlignment,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      child: Transform.scale(
+                        key: ValueKey('photo_${_photos[_photoIndex]}_$_photoScale$_highlightBorder$_glowBoxFactor'),
+                        scale: _photoScale,
                         alignment: Alignment.center,
-                        clipBehavior: Clip.none,
-                        children: [
-                          
-                          // ① 上層：原本的照片
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(_cornerRadius - 2),
-                            child: Image.asset(
-                              _photos[_photoIndex],
-                              fit: BoxFit.contain,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
+                          children: [
+                            
+                            // ① 上層：原本的照片
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(_cornerRadius - 2),
+                              child: Image.asset(
+                                _photos[_photoIndex],
+                                fit: BoxFit.contain,
+                              ),
                             ),
-                          ),
-                          // ② 底層：縮小後的發光容器（只在高亮時顯示）
-                          if (_highlightBorder)
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                ignoring: true,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 160),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(_cornerRadius),
-                                    border: Border.all(color: const Color.fromARGB(0xff, 0x8a, 0xe9, 0x4a), width: _borderWidth),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.greenAccent.withOpacity(0),
-                                        blurRadius: _glowBlur,
-                                        spreadRadius: _glowSpread,
-                                      ),
-                                    ],
+                            // ② 底層：縮小後的發光容器（只在高亮時顯示）
+                            if (_highlightBorder)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  ignoring: true,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 160),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(_cornerRadius),
+                                      border: Border.all(color: const Color.fromARGB(0xff, 0x8a, 0xe9, 0x4a), width: _borderWidth),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.greenAccent.withOpacity(0),
+                                          blurRadius: _glowBlur,
+                                          spreadRadius: _glowSpread,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
             ),
           ),
 
@@ -333,7 +386,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
                 runSpacing: 12,
                 children: [
                   // ElevatedButton(
-                  //   onPressed: () => _dogJumpFire(),
+                  //   onPressed: () => _dogWaveFire(),
                   //   child: const Text('跳躍'),
                   // ),
                   // // 這顆按鈕：切換前景照片
@@ -394,6 +447,25 @@ Widget _buildOverlay() {
             ),
           )
         : const SizedBox.shrink(),
+       // [REC] 錄音按鈕（疊在最上層）
+      if (_recordButtonArt != null)
+        Align(
+          alignment: Alignment.bottomCenter, // 👈 可以改為 bottomLeft、topRight 等
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 0), // 👈 下移距離，可調整
+            child: SizedBox(
+              width: 100,  // 👈 設定寬度
+              height: 100, // 👈 設定高度
+              child: rive.Rive(
+                artboard: _recordButtonArt!,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        )
+      else
+        const SizedBox.shrink(),  // 若錄音按鈕未載入，則不顯示 
+
     ],
   );
 }

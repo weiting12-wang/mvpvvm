@@ -112,9 +112,12 @@ flutter:
     - assets/images/L_card/Group 45.png
     - assets/images/L_card/Group 46.png
     - assets/images/L_card/Group 47.png
+    - assets/images/L_card/Group 48.png
+    - assets/images/L_card/Group 49.png
+    - assets/images/L_card/Group 50.png
     - assets/translations/
     - assets/rive/vehicles.riv
-    - assets/rive/game1_dog_luca_iphone16.riv
+    - assets/rive/game1_dog_luca.riv
     - assets/videos/intro.mov
 
   # To add assets to your application, add an assets section, like this:
