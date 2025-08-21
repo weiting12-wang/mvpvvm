@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+//import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,18 +42,22 @@ class ProfileRepository {
     DateTime? expiryDatePremium;
     bool? isLifetimePremium;
 
-    // Get purchase information
-    final logInResult = await Purchases.logIn(userId);
-    final activeEntitlements = logInResult.customerInfo.entitlements.active;
-    if (activeEntitlements.containsKey(Constants.premium)) {
-      final premiumEntitlement = activeEntitlements[Constants.premium];
-      final date = premiumEntitlement?.expirationDate;
-      if (date != null) {
-        expiryDatePremium = DateTime.parse(date);
-      } else {
-        isLifetimePremium = true;
-      }
-    }
+    // Get purchase information - 全部註解掉
+    // final logInResult = await Purchases.logIn(userId);
+    // final activeEntitlements = logInResult.customerInfo.entitlements.active;
+    // if (activeEntitlements.containsKey(Constants.premium)) {
+    //   final premiumEntitlement = activeEntitlements[Constants.premium];
+    //   final date = premiumEntitlement?.expirationDate;
+    //   if (date != null) {
+    //     expiryDatePremium = DateTime.parse(date);
+    //   } else {
+    //     isLifetimePremium = true;
+    //   }
+    // }
+
+    // 設定預設值（免費用戶）
+    expiryDatePremium = null;
+    isLifetimePremium = false;
 
     return result.copyWith(
       expiryDatePremium: expiryDatePremium,

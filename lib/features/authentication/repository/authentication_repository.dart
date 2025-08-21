@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+//import 'package:google_sign_in/google_sign_in.dart';
+//import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -276,7 +276,7 @@ class AuthenticationRepository {
 
 
 
-
+/*
   Future<AuthResponse> signInWithGoogle() async {
     // TODO: fake data
     return AuthResponse(
@@ -369,7 +369,7 @@ class AuthenticationRepository {
       throw Exception(Languages.unexpectedErrorOccurred);
     }
   }
-
+*/
   Future<void> signOut() async {
     // TODO: fake data
     return;
@@ -377,7 +377,7 @@ class AuthenticationRepository {
     try {
       await supabase.auth.signOut();
       setIsLogin(false);
-      Purchases.logOut();
+//       //Purchases.logOut();
     } on AuthException catch (error) {
       throw Exception(error.message);
     } catch (error) {

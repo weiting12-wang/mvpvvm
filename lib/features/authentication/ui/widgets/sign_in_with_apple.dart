@@ -13,6 +13,9 @@ class SignInWithApple extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+        // 暫時不顯示 Apple Sign-In
+    return const SizedBox.shrink();
+    /*
     return SecondaryButton(
       icon: SizedBox(
         width: 20,
@@ -29,6 +32,6 @@ class SignInWithApple extends ConsumerWidget {
       text: 'apple'.tr(),
       onPressed: () =>
           ref.read(authenticationViewModelProvider.notifier).signInWithApple(),
-    );
+    );*/
   }
 }

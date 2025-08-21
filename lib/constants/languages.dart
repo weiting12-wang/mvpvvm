@@ -23,7 +23,7 @@ class Languages {
   static String signIn = 'sign_in'.tr();
   static String register = 'register'.tr();
   static String google = 'google'.tr();
-  static String signInWithGoogle = 'sign_in_with_google'.tr();
+  //static String signInWithGoogle = 'sign_in_with_google'.tr();
   static String apple = 'apple'.tr();
   static String signInWithApple = 'sign_in_with_apple'.tr();
   static String accessTokenNotFound = 'access_token_not_found'.tr();
@@ -89,14 +89,14 @@ class Languages {
   static String subscriptionInfo = Platform.isIOS
       ? 'subscription_info_ios'.tr()
       : 'subscription_info_android'.tr();
-  static String restorePurchases = 'restore_purchases'.tr();
+  //static String restorePurchases = 'restore_purchases'.tr();
   static String fetchOfferingsError = 'fetch_offerings_error'.tr();
   static String packageNotFoundError = 'package_not_found_error'.tr();
-  static String purchaseSuccess = 'purchase_success'.tr();
-  static String purchaseError = 'purchase_error'.tr();
-  static String restorePurchasesSuccess = 'restore_purchases_success'.tr();
-  static String noActivePurchases = 'no_active_purchases'.tr();
-  static String restorePurchasesError = 'restore_purchases_error'.tr();
+  //static String purchaseSuccess = 'purchase_success'.tr();
+  //static String purchaseError = 'purchase_error'.tr();
+  //static String restorePurchasesSuccess = 'restore_purchases_success'.tr();
+  //static String noActivePurchases = 'no_active_purchases'.tr();
+  //static String restorePurchasesError = 'restore_purchases_error'.tr();
 
   // Rive Game
   static String riveGameTitle = 'enlightenary_game'.tr();

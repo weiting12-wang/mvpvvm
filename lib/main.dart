@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
+// import 'package:purchases_flutter/purchases_flutter.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -18,18 +18,18 @@ import 'routing/router.dart';
 import 'utils/provider_observer.dart';
 import 'utils/device_info_service.dart';
 
-Future<void> initPlatformState() async {
-  try {
-    await Purchases.setLogLevel(LogLevel.debug);
-
-    final configuration = PurchasesConfiguration(
-      Platform.isIOS ? Env.revenueCatAppStore : Env.revenueCatPlayStore,
-    );
-    await Purchases.configure(configuration);
-  } on PlatformException catch (e) {
-    debugPrint('${Constants.tag} [initPlatformState] Error: ${e.message}');
-  }
-}
+//Future<void> initPlatformState() async {
+//  try {
+// //    await Purchases.setLogLevel(LogLevel.debug);
+//
+//    final configuration = PurchasesConfiguration(
+//      Platform.isIOS ? Env.revenueCatAppStore : Env.revenueCatPlayStore,
+//    );
+// //    await Purchases.configure(configuration);
+//  } on PlatformException catch (e) {
+//    debugPrint('${Constants.tag} [initPlatformState] Error: ${e.message}');
+//  }
+//}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +58,7 @@ void main() async {
   // MobileAds.instance.initialize();
 
   /// RevenueCat
-  await initPlatformState();
+  ///await initPlatformState();
 
   /// Localization
   await EasyLocalization.ensureInitialized();

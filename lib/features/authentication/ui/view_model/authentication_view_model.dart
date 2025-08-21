@@ -236,7 +236,7 @@ Future<void> sendOtp(String email) async {
     );
     handleResult(result);
   }
-
+/*
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();
     final authRepo = ref.read(authenticationRepositoryProvider);
@@ -250,7 +250,7 @@ Future<void> sendOtp(String email) async {
     final result = await AsyncValue.guard(authRepo.signInWithApple);
     handleResult(result);
   }
-
+*/
   Future<void> signOut() async {
     state = const AsyncValue.loading();
     final authRepo = ref.read(authenticationRepositoryProvider);

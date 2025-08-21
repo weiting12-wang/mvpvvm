@@ -11,7 +11,7 @@ import '../../../theme/app_colors.dart';
 import '../../hero_list/ui/view_model/hero_count_provider.dart';
 import '../../hero_list/ui/view_model/hero_list_view_model.dart';
 import '../../../features/game/ui/game_screen.dart';
-
+import '../../../features/training/ui/training_page.dart';
 
 // const List<Widget> _screens = [
 //   HeroListScreen(),
@@ -39,7 +39,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
  
    List<Widget> _buildScreens() {
     return [
-      const HeroListScreen(),
+      const TrainingPage(), // 🆕 第一個 tab 改為 TrainingPage（閃電圖標）
       const HeroListScreen(),
       const ProfileScreen(),
       // 注意：不要加 const，並用 ValueKey 綁定 tick
@@ -51,7 +51,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   void initState() {
     super.initState();
     //_controller = PersistentTabController();
-    _controller = PersistentTabController(initialIndex: 0);
+    _controller = PersistentTabController(initialIndex: 1);
   }
 
   @override
