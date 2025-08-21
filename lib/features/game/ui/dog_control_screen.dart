@@ -47,6 +47,12 @@ class _DogControlScreenState extends State<DogControlScreen> {
   static const String _pizzaStateMachine = 'PizzaSM';
   static const String _pizzaBlink = 'blink';
 
+  static const String _pizzaB1BaseTrigName = 'pepperoniTrigger';
+  static const String _pizzaB2BaseTrigName = 'greenpepperTrigger';
+  static const String _pizzaB3BaseTrigName = 'olivesTrigger';
+  static const String _pizzaB4BaseTrigName = 'purpleonionTrigger';
+  static const String _pizzaB5BaseTrigName = 'mushroomsTrigger';
+
   static const String _pizzab1ArtboardName = 'pizza_bt01';
   static const String _pizzab1StateMachine = 'pizza_bt01SM';
   static const String _pizzab2ArtboardName = 'pizza_bt02';
@@ -57,6 +63,13 @@ class _DogControlScreenState extends State<DogControlScreen> {
   static const String _pizzab4StateMachine = 'pizza_bt04SM';
   static const String _pizzab5ArtboardName = 'pizza_bt05';
   static const String _pizzab5StateMachine = 'pizza_bt05SM';
+
+  // Pizza base 按鈕的 enabled 觸發器
+  rive.SMITrigger? _pizzaB1BaseTrig;
+  rive.SMITrigger? _pizzaB2BaseTrig;
+  rive.SMITrigger? _pizzaB3BaseTrig;
+  rive.SMITrigger? _pizzaB4BaseTrig;
+  rive.SMITrigger? _pizzaB5BaseTrig;
 
   // [NEW] Pizza B1~B5 的 enabled 觸發器
   rive.SMITrigger? _pizzaB1EnabledTrig;
@@ -170,7 +183,7 @@ class _DogControlScreenState extends State<DogControlScreen> {
 
       // 1) Rive：啟動動畫
       _recStartTrig?.fire();
-      // Dog 鼓勵動畫連續 3 次（非阻塞：不 await）
+      // Dog 鼓勵動畫
       _dogEncourageTrig?.fire();
       
       final tempDir = await getTemporaryDirectory();
@@ -236,6 +249,8 @@ class _DogControlScreenState extends State<DogControlScreen> {
           _recordCorrectCount = (_recordCorrectCount + 1) % 5;
       }
 
+      _nextPhoto(); // ✅ 每次錄音後換下一張照片
+
       final streamed = await req.send();
       final resp = await http.Response.fromStream(streamed);
 
@@ -295,6 +310,11 @@ class _DogControlScreenState extends State<DogControlScreen> {
       } else {
         pizzaArt.addController(pizzaCtrl);
         _pizzaBlinkTrig = pizzaCtrl.findInput<bool>(_pizzaBlink) as rive.SMITrigger?;
+        _pizzaB1BaseTrig = pizzaCtrl.findInput<bool>(_pizzaB1BaseTrigName) as rive.SMITrigger?;
+        _pizzaB2BaseTrig = pizzaCtrl.findInput<bool>(_pizzaB2BaseTrigName) as rive.SMITrigger?;
+        _pizzaB3BaseTrig = pizzaCtrl.findInput<bool>(_pizzaB3BaseTrigName) as rive.SMITrigger?;
+        _pizzaB4BaseTrig = pizzaCtrl.findInput<bool>(_pizzaB4BaseTrigName) as rive.SMITrigger?;
+        _pizzaB5BaseTrig = pizzaCtrl.findInput<bool>(_pizzaB5BaseTrigName) as rive.SMITrigger?;
       }
 
       if (!mounted) return;
@@ -632,17 +652,37 @@ Widget _buildOverlay() {
         Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 80), // 上移，避免蓋到錄音按鈕
+            padding: const EdgeInsets.only(bottom: 80), // 與錄音鈕保持距離
             child: SizedBox(
               height: 80,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildMiniRive(_pizzaB1Art!),
-                  _buildMiniRive(_pizzaB2Art!),
-                  _buildMiniRive(_pizzaB3Art!),
-                  _buildMiniRive(_pizzaB4Art!),
-                  _buildMiniRive(_pizzaB5Art!),
+                  _miniRiveBtn(
+                    art: _pizzaB1Art!,
+                    selfEnabled: _pizzaB1EnabledTrig,   // 可為 null
+                    mainPizzaTrig: _pizzaB1BaseTrig,    // 觸發主 Pizza 的 b1trigger
+                  ),
+                  _miniRiveBtn(
+                    art: _pizzaB2Art!,
+                    selfEnabled: _pizzaB2EnabledTrig,
+                    mainPizzaTrig: _pizzaB2BaseTrig,
+                  ),
+                  _miniRiveBtn(
+                    art: _pizzaB3Art!,
+                    selfEnabled: _pizzaB3EnabledTrig,
+                    mainPizzaTrig: _pizzaB3BaseTrig,
+                  ),
+                  _miniRiveBtn(
+                    art: _pizzaB4Art!,
+                    selfEnabled: _pizzaB4EnabledTrig,
+                    mainPizzaTrig: _pizzaB4BaseTrig,
+                  ),
+                  _miniRiveBtn(
+                    art: _pizzaB5Art!,
+                    selfEnabled: _pizzaB5EnabledTrig,
+                    mainPizzaTrig: _pizzaB5BaseTrig,
+                  ),
                 ],
               ),
             ),
@@ -652,16 +692,28 @@ Widget _buildOverlay() {
   );
 }
 
-Widget _buildMiniRive(rive.Artboard art) {
-  return SizedBox(
-    width: 60,
-    height: 60,
-    child: rive.Rive(
-      artboard: art,
-      fit: BoxFit.contain,
+// 可點擊的小 Rive 按鈕：點擊時先觸發自己的 enabled（若有），再觸發主 Pizza 的對應 Trigger
+Widget _miniRiveBtn({
+  required rive.Artboard art,
+  rive.SMITrigger? selfEnabled,   // 小按鈕自己的視覺回饋（optional）
+  rive.SMITrigger? mainPizzaTrig, // 主 Pizza 上的對應 Trigger
+}) {
+  return GestureDetector(
+    onTap: () {
+      selfEnabled?.fire();   // 小按鈕自身的「enabled」效果（可省略）
+      mainPizzaTrig?.fire(); // 關鍵：觸發主 Pizza 的動畫（b1/b2/...）
+    },
+    child: SizedBox(
+      width: 60,
+      height: 60,
+      child: rive.Rive(
+        artboard: art,
+        fit: BoxFit.contain,
+      ),
     ),
   );
 }
+
 
 
   
