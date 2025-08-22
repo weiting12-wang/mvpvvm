@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:easy_localization/easy_localization.dart';
+//import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -14,6 +14,8 @@ class SignInWithGoogle extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return const SizedBox.shrink();
+    /*
     return SecondaryButton(
       icon: SizedBox(
         width: 32,
@@ -26,6 +28,6 @@ class SignInWithGoogle extends ConsumerWidget {
       text: Platform.isIOS ? 'google'.tr() : 'sign_in_with_google'.tr(),
       onPressed: () =>
           ref.read(authenticationViewModelProvider.notifier).signInWithGoogle(),
-    );
+    );*/
   }
 }
