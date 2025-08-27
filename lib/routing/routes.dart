@@ -12,6 +12,8 @@ class Routes {
   static const languages = '/languages';
   static const premium = '/premium';
   static const birthdayInput = '/birthday-input';
+  static const languageSelection = '/language-selection'; 
+  static const speechTherapistExperience = '/speech-therapist-experience'; 
 
     // 🆕 新增忘記密碼相關路由
   static const forgotPassword = '/forgot-password';

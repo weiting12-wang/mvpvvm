@@ -16,6 +16,8 @@ import '../features/profile/ui/account_info_screen.dart';
 import '../features/profile/ui/appearances_screen.dart';
 import '../features/profile/ui/languages_screen.dart';
 import '../features/onboarding/ui/birthday_input_screen.dart';
+import '../features/onboarding/ui/language_selection_screen.dart';
+import '../features/onboarding/ui/speech_therapist_experience_screen.dart';
 import 'routes.dart';
 
 
@@ -140,6 +142,14 @@ final GoRouter router = GoRouter(
       path: Routes.birthdayInput,
       pageBuilder: (context, state) => state.slidePage(const BirthdayInputScreen()
       ),
+    ),
+    GoRoute(
+      path: Routes.languageSelection,
+      pageBuilder: (context, state) => state.slidePage(const LanguageSelectionScreen()),
+    ),
+    GoRoute(
+      path: Routes.speechTherapistExperience,
+      pageBuilder: (context, state) => state.slidePage(const SpeechTherapistExperienceScreen()),
     ),
     // 🆕 新增忘記密碼頁面路由
     GoRoute(

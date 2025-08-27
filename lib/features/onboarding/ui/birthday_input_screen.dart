@@ -248,7 +248,7 @@ class _BirthdayInputScreenState extends ConsumerState<BirthdayInputScreen> {
               Center(
                 child: TextButton(
                   onPressed: () {
-                    context.pushReplacement(Routes.main);
+                    context.pushReplacement('/language-selection'); // 👈 改成跳轉到語言選擇
                   },
                   child: const Text(
                     'Skip',
@@ -291,7 +291,8 @@ class _BirthdayInputScreenState extends ConsumerState<BirthdayInputScreen> {
       print('✅ 年齡: ${_calculateAge()} 歲');
       
       if (context.mounted) {
-        context.pushReplacement(Routes.main);
+        context.pushReplacement('/language-selection');
+        //context.pushReplacement(Routes.main);
       }
     } catch (error) {
       print('❌ 儲存生日失敗: $error');
